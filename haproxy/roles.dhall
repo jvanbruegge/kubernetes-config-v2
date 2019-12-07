@@ -1,4 +1,5 @@
 let api = ../api.dhall
+
 let kube = ../kubernetes.dhall
 
 let clusterRules =
@@ -47,11 +48,12 @@ let rules =
         }
       ]
 
-in  api.mkRoles
-      { serviceAccount = "ingresses-controller"
-      , createAccount = True
-      , name = "ingresses-controller"
-      , namespace = "haproxy"
-      , clusterRules = clusterRules
-      , rules = rules
-      }
+in    λ(input : { serviceAccount : Text, namespace : Text })
+    → api.mkRoles
+        (   { createAccount = True
+            , name = "ingresses-controller"
+            , clusterRules = clusterRules
+            , rules = rules
+            }
+          ⫽ input
+        )
