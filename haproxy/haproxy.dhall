@@ -1,4 +1,7 @@
-let settings = { namespace = "haproxy", serviceAccount = "ingress-controller" }
+let settings =
+        { namespace = "haproxy", serviceAccount = "ingress-controller" }
+      : ./Settings.dhall
 
 in    ./roles.dhall settings
-    # ./default-backend.dhall { namespace = settings.namespace }
+    # ./default-backend.dhall settings
+    # ./haproxy-deployment.dhall settings

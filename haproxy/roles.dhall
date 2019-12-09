@@ -48,7 +48,7 @@ let rules =
         }
       ]
 
-in    λ(input : { serviceAccount : Text, namespace : Text })
+in    λ(input : ./Settings.dhall)
     → api.mkRoles
         (   { createAccount = True
             , name = "ingresses-controller"

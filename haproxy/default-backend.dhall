@@ -1,4 +1,5 @@
 let kube = ../kubernetes.dhall
+
 let api = ../api.dhall
 
 let Deployment = ../api/DeploymentWithService.dhall
@@ -11,7 +12,7 @@ let container =
           [ kube.ContainerPort::{ containerPort = 8080, name = Some "http" } ]
       }
 
-in    λ(input : { namespace : Text })
+in    λ(input : ./Settings.dhall)
     → let config =
             Deployment::{
             , name = "ingress-default-backend"
@@ -19,4 +20,4 @@ in    λ(input : { namespace : Text })
             , containers = [ container ]
             }
 
-      in api.mkDeploymentAndService config
+      in  api.mkDeploymentAndService config
