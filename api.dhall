@@ -1,1 +1,2 @@
-{ mkRoles = ./api/mkRoles.dhall }
+{ mkRoles = ./api/mkRoles.dhall,
+mkDeploymentAndService = ./api/mkDeploymentAndService.dhall }
