@@ -4,6 +4,8 @@ let union = ../union.dhall
 
 let api = ../api.dhall
 
+let globalSettings = ../settings.dhall
+
 let Deployment = ../api/DeploymentWithService.dhall
 
 let mkContainer =
@@ -98,6 +100,7 @@ in    λ(input : ./Settings.dhall)
                     }
                 ]
             , serviceAccount = Some input.serviceAccount
+            , externalIPs = globalSettings.serverIPs
             }
 
       in    [ union.ConfigMap configMap, union.ConfigMap tcpConfigMap ]
