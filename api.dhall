@@ -1,5 +1,6 @@
 { mkRoles = ./api/mkRoles.dhall
-, mkDeploymentAndService = ./api/mkDeploymentAndService.dhall
+, mkDeployment = ./api/mkDeployment.dhall
 , mkNamespace = ./api/mkNamespace.dhall
 , Roles = ./api/Roles.dhall
+, SimpleDeployment = ./api/SimpleDeployment.dhall
 }

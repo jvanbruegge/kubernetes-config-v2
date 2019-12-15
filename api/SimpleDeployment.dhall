@@ -8,6 +8,7 @@ let Deployment =
       , replicas : Natural
       , serviceAccount : Optional Text
       , externalIPs : List Text
+      , servicePorts : Optional (List Natural)
       }
 
 let default =
@@ -16,6 +17,7 @@ let default =
       , replicas = 1
       , serviceAccount = None Text
       , externalIPs = [] : List Text
+      , servicePorts = None (List Natural)
       }
 
 in  { Type = Deployment, default = default }

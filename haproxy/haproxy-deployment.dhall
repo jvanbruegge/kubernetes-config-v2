@@ -6,8 +6,6 @@ let api = ../api.dhall
 
 let globalSettings = ../settings.dhall
 
-let Deployment = ../api/DeploymentWithService.dhall
-
 let mkContainer =
         λ ( input
           : { configMapName : Text, tcpConfigMapName : Text, namespace : Text }
@@ -89,7 +87,7 @@ in    λ(input : ./Settings.dhall)
             }
 
       let config =
-            Deployment::{
+            api.SimpleDeployment::{
             , name = "haproxy"
             , namespace = input.namespace
             , containers =
@@ -104,4 +102,4 @@ in    λ(input : ./Settings.dhall)
             }
 
       in    [ union.ConfigMap configMap, union.ConfigMap tcpConfigMap ]
-          # api.mkDeploymentAndService config
+          # api.mkDeployment config

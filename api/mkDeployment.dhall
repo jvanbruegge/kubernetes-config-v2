@@ -2,12 +2,14 @@ let kube = ../kubernetes.dhall
 
 let union = ../union.dhall
 
+let utils = ../utils.dhall
+
 let prelude = ../prelude.dhall
 
-let Deployment = ./DeploymentWithService.dhall
+let SimpleDeployment = ./SimpleDeployment.dhall
 
 let mkTemplate =
-        λ(input : Deployment.Type)
+        λ(input : SimpleDeployment.Type)
       → kube.PodTemplateSpec::{
         , metadata =
             kube.ObjectMeta::{
@@ -24,13 +26,24 @@ let mkTemplate =
         }
 
 let getPorts =
-        λ(input : Deployment.Type)
+        λ(input : SimpleDeployment.Type)
       → let containerPorts =
               prelude.List.concatMap
                 kube.Container.Type
                 kube.ContainerPort.Type
                 (λ(x : kube.Container.Type) → x.ports)
                 input.containers
+
+        let filterPorts =
+              prelude.Optional.default
+                (List Natural)
+                ( prelude.List.map
+                    kube.ContainerPort.Type
+                    Natural
+                    (λ(x : kube.ContainerPort.Type) → x.containerPort)
+                    containerPorts
+                )
+                input.servicePorts
 
         in  prelude.List.map
               kube.ContainerPort.Type
@@ -45,9 +58,15 @@ let getPorts =
                         (< Int : Natural | String : Text >.Int x.containerPort)
                   }
               )
-              containerPorts
+              ( prelude.List.filter
+                  kube.ContainerPort.Type
+                  (   λ(x : kube.ContainerPort.Type)
+                    → utils.List.naturalElementOf x.containerPort filterPorts
+                  )
+                  containerPorts
+              )
 
-in    λ(input : Deployment.Type)
+in    λ(input : SimpleDeployment.Type)
     → let meta =
             kube.ObjectMeta::{
             , name = input.name

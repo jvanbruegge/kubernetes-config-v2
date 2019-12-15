@@ -2,8 +2,6 @@ let kube = ../kubernetes.dhall
 
 let api = ../api.dhall
 
-let Deployment = ../api/DeploymentWithService.dhall
-
 let container =
       kube.Container::{
       , name = "ingress-default-backend"
@@ -14,10 +12,10 @@ let container =
 
 in    λ(input : ./Settings.dhall)
     → let config =
-            Deployment::{
+            api.SimpleDeployment::{
             , name = "ingress-default-backend"
             , namespace = input.namespace
             , containers = [ container ]
             }
 
-      in  api.mkDeploymentAndService config
+      in  api.mkDeployment config
