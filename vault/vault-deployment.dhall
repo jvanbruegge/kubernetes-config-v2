@@ -36,4 +36,4 @@ in    λ(input : ./Settings.dhall)
             , serviceAccount = Some input.serviceAccount
             }
 
-      in  api.mkDeployment config
+      in  api.mkStatefulSet config
