@@ -1,5 +1,7 @@
 let kube = ../kubernetes.dhall
+
 let prelude = ../prelude.dhall
+
 let Union = ../union.dhall
 
 let Rule = kube.PolicyRule.Type
@@ -9,7 +11,9 @@ let f =
       → λ(xs : List a)
       → λ(x : Union)
       →       if prelude.Natural.isZero (prelude.List.length a xs)
+
         then  [] : List Union
+
         else  [ x ]
 
 let Input =
@@ -27,9 +31,11 @@ in    λ(i : Input)
 
       let serviceAccount =
                   if i.createAccount
+
             then  [ Union.ServiceAccount
                       kube.ServiceAccount::{ metadata = meta }
                   ]
+
             else  [] : List Union
 
       let clusterRole =

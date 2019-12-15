@@ -51,9 +51,9 @@ let rules =
 in    λ(input : ./Settings.dhall)
     → api.mkRoles
         (   { createAccount = True
-            , name = "ingresses-controller"
+            , name = input.serviceAccount
             , clusterRules = clusterRules
             , rules = rules
             }
-          ⫽ input
+          ⫽ input.{ namespace, serviceAccount }
         )

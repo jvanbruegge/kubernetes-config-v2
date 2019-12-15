@@ -14,7 +14,7 @@ let mkContainer =
           )
       → kube.Container::{
         , name = "haproxy-ingress"
-        , image = Some "quay.io/quay.io/jcmoraisjr/haproxy-ingress:v0.7.5"
+        , image = Some "quay.io/jcmoraisjr/haproxy-ingress:v0.7"
         , imagePullPolicy = Some "IfNotPresent"
         , args =
             [ "--default-backend-service=${input.namespace}/ingress-default-backend"
