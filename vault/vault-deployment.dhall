@@ -2,6 +2,8 @@ let kube = ../kubernetes.dhall
 
 let api = ../api.dhall
 
+let ann = ../haproxy/annotations.dhall
+
 let vaultContainer =
       kube.Container::{
       , name = "vault"
@@ -34,6 +36,10 @@ in    λ(input : ./Settings.dhall)
             , namespace = input.namespace
             , containers = [ vaultContainer ]
             , serviceAccount = Some input.serviceAccount
+            , ingress =
+                api.Ingress::{
+                , annotations = [ ann.sslPassthrough, ann.sslRedirect ]
+                }
             }
 
       in  api.mkStatefulSet config
