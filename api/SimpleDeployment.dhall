@@ -1,5 +1,7 @@
 let kube = ../kubernetes.dhall
 
+let Ingress = ./Ingress.dhall
+
 let Deployment =
       { containers : List kube.Container.Type
       , initContainers : List kube.Container.Type
@@ -9,6 +11,7 @@ let Deployment =
       , serviceAccount : Optional Text
       , externalIPs : List Text
       , servicePorts : Optional (List Natural)
+      , ingress : Ingress.Type
       }
 
 let default =
@@ -18,6 +21,7 @@ let default =
       , serviceAccount = None Text
       , externalIPs = [] : List Text
       , servicePorts = None (List Natural)
+      , ingress = Ingress.default
       }
 
 in  { Type = Deployment, default = default }

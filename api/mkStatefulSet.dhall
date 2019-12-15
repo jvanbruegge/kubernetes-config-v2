@@ -44,4 +44,6 @@ in    λ(input : SimpleDeployment.Type)
                     )
               }
 
-      in  [ Union.StatefulSet set ] # ./internal/mkService.dhall input2
+      in    [ Union.StatefulSet set ]
+          # ./internal/mkService.dhall input2
+          # ./internal/mkIngress.dhall input2

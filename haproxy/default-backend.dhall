@@ -16,6 +16,7 @@ in    λ(input : ./Settings.dhall)
             , name = "ingress-default-backend"
             , namespace = input.namespace
             , containers = [ container ]
+            , ingress = api.noIngress
             }
 
       in  api.mkDeployment config

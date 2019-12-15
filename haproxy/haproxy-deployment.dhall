@@ -99,6 +99,7 @@ in    λ(input : ./Settings.dhall)
                 ]
             , serviceAccount = Some input.serviceAccount
             , externalIPs = globalSettings.serverIPs
+            , ingress = api.noIngress
             }
 
       in    [ union.ConfigMap configMap, union.ConfigMap tcpConfigMap ]
