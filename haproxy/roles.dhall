@@ -50,10 +50,10 @@ let rules =
 
 in    λ(input : ./Settings.dhall)
     → api.mkRoles
-        (   { createAccount = True
-            , name = input.serviceAccount
-            , clusterRules = clusterRules
-            , rules = rules
-            }
-          ⫽ input.{ namespace, serviceAccount }
-        )
+        api.Roles::{
+        , name = input.serviceAccount
+        , clusterRules = clusterRules
+        , rules = rules
+        , namespace = input.namespace
+        , serviceAccount = input.serviceAccount
+        }
