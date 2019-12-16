@@ -12,6 +12,7 @@ let Deployment =
       , externalIPs : List Text
       , servicePorts : Optional (List Natural)
       , ingress : Ingress.Type
+      , volumes : List kube.Volume.Type
       }
 
 let default =
@@ -22,6 +23,7 @@ let default =
       , externalIPs = [] : List Text
       , servicePorts = None (List Natural)
       , ingress = Ingress.default
+      , volumes = [] : List kube.Volume.Type
       }
 
 in  { Type = Deployment, default = default }

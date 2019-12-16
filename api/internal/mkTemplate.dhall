@@ -17,5 +17,6 @@ in    λ(input : SimpleDeployment.Type)
             , containers = input.containers
             , initContainers = input.initContainers
             , serviceAccountName = input.serviceAccount
+            , volumes = input.volumes
             }
       }

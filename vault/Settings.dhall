@@ -1,1 +1,1 @@
-{ namespace : Text, serviceAccount : Text }
+{ namespace : Text, serviceAccount : Text, claimName : Text }
