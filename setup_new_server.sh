@@ -56,3 +56,131 @@ transferVaultCert
 # Deploy HAProxy & vault
 dhall-to-yaml --omit-empty --documents --file haproxy/haproxy.dhall | \
     kubectl apply -f -
+
+dhall-to-yaml --omit-empty --documents --file vault/vault.dhall | \
+    kubectl apply -f -
+
+echo "Waiting for vault to start up"
+
+sleep 5
+kubectl wait --namespace=vault --for=condition=ready --timeout=3000s pods vault-0
+
+# Configure vault
+cd openssl
+echo "$caPass" | ./generateCertificate.sh "$dir" "$caDir" "vault-operator"
+cd ..
+
+export VAULT_ADDR="https://vault.cerberus-systems.de"
+export VAULT_CACERT="$caDir/ca.crt"
+export VAULT_CLIENT_CERT="$dir/vault-operator.crt"
+export VAULT_CLIENT_KEY="$dir/vault-operator.key"
+
+set +e
+vaultKeys=$(vault operator init 2> /dev/null)
+res=$?
+set -e
+
+if [[ $res == 0 ]]; then
+    echo "$vaultKeys" > vault_keys.txt
+    echo "Initialized vault - find keys in vault_keys.txt"
+fi
+
+for i in 1 2 3; do
+    key=$(echo "$vaultKeys" | grep "Unseal Key $i:" | awk '{ print $NF }')
+
+    echo "{ \"key\": \"$key\" }" | \
+        curl -X PUT --data @- \
+            --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" \
+            --key "$VAULT_CLIENT_KEY" "$VAULT_ADDR/v1/sys/unseal" > /dev/null
+done
+
+token=$(cat vault_keys.txt | grep "Initial Root Token: " | awk '{ print $NF }')
+export VAULT_TOKEN="$token"
+
+cd openssl
+echo "./ca.conf.dhall \"$caDir\"" | dhall text > "$dir/ca.conf"
+cd ..
+
+for name in pki_int_outside pki_int_inside; do
+
+    echo "Generating and signing $name"
+
+    set +e
+    vault secrets enable --path="$name" pki
+    res=$?
+    set -e
+
+    if [[ $res == 0 ]]; then
+        vault secrets tune -max-lease-ttl=720h "$name"
+
+        vault write "$name/intermediate/generate/internal" \
+            common_name="Cerberus Systems Intermediate CA" \
+            organization="Cerberus Systems" \
+            ttl=43800h -format=json | \
+            jq -r .data.csr > "$dir/$name.csr"
+
+        echo "$caPass"$'\ny\ny\n' | \
+            openssl ca -extensions intermediate-ca_ext -in "$dir/$name.csr" \
+                -out "$dir/$name.crt" -days 720 -config "$dir/ca.conf" \
+                -passin stdin -notext
+
+        cat "$dir/$name.crt" "$caDir/ca.crt" > "$dir/$name-chain.crt"
+
+        vault write "$name/intermediate/set-signed" certificate="@$dir/$name-chain.crt"
+
+        vault write "$name/roles/get-cert" \
+            allowed_domains=cerberus-systems.de,cerberus-systems.com,svc.cluster.local \
+            allow_subdomains=true max_ttl=1860h
+    fi
+done
+
+# Let vault generate a certificate for itself
+for name in vault vault-operator; do
+    result=$(vault write "pki_int_outside/issue/get-cert" -format="json" \
+        common_name="$name.cerberus-systems.de")
+
+    echo "$result" | jq -r '.data.certificate' > "$dir/$name.crt"
+    echo "$result" | jq -r '.data.private_key' > "$dir/$name.key"
+done
+
+transferVaultCert
+
+kubectl delete --namespace=vault statefulsets.apps vault
+kubectl wait --namespace=vault --for=delete --timeout=3000s pods vault-0
+
+dhall-to-yaml --omit-empty --documents --file vault/vault.dhall | \
+    kubectl apply -f -
+
+export VAULT_CACERT="$dir/pki_int_outside.crt"
+sleep 5
+kubectl wait --namespace=vault --for=condition=ready --timeout=3000s pods vault-0
+
+./unsealVault.sh
+
+set +e
+vault auth enable kubernetes
+res=$?
+set -e
+
+if [[ $res == 0 ]]; then
+    echo "Configuring vault kubernetes authentification"
+
+    accountPath="/run/secrets/kubernetes.io/serviceaccount"
+    kubeCert=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/ca.crt")
+    serviceToken=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/token")
+
+    echo "$kubeCert" > "$dir/kubernetes_ca.crt"
+
+    vault write auth/kubernetes/config \
+        kubernetes_host='https://kubernetes.default.svc.cluster.local' \
+        kubernetes_ca_cert="@$dir/kubernetes_ca.crt" \
+        token_reviewer_jwt="$serviceToken"
+
+    dhall text --file vault/policies/get-cert.hcl.dhall \
+       | vault policy write get-cert -
+
+    vault write auth/kubernetes/role/get-cert \
+       bound_service_account_names=default \
+       bound_service_account_namespaces='*' \
+       generate_lease=true policies=get-cert ttl=2h
+fi

@@ -14,6 +14,15 @@ let vaultContainer =
       kube.Container::{
       , name = "vault"
       , image = Some "registry.hub.docker.com/library/vault:1.3.0"
+      , command = [ "sh" ]
+      , args =
+          [ "-c"
+          , ''
+            mkdir -p ${dataPath}/config \
+              && chown -R vault:vault ${dataPath} \
+              && docker-entrypoint.sh server
+            ''
+          ]
       , env =
           [ { name = "VAULT_LOCAL_CONFIG"
             , value =
