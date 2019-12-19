@@ -22,6 +22,7 @@ let ldapContainer =
             , value = Some (utils.NonEmpty.head Text globalSettings.hosts)
             }
           , kube.EnvVar::{ name = "LDAP_TLS_ENFORCE", value = Some "true" }
+          , kube.EnvVar::{ name = "LDAP_ADMIN_PASSWORD", value = Some "admin" }
           ]
       , ports =
           [ kube.ContainerPort::{ containerPort = 636, name = Some "ldaps" } ]

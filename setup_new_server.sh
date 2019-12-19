@@ -75,15 +75,10 @@ export VAULT_CACERT="$caDir/ca.crt"
 export VAULT_CLIENT_CERT="$dir/vault-operator.crt"
 export VAULT_CLIENT_KEY="$dir/vault-operator.key"
 
-set +e
 vaultKeys=$(vault operator init 2> /dev/null)
-res=$?
-set -e
 
-if [[ $res == 0 ]]; then
-    echo "$vaultKeys" > vault_keys.txt
-    echo "Initialized vault - find keys in vault_keys.txt"
-fi
+echo "$vaultKeys" > vault_keys.txt
+echo "Initialized vault - find keys in vault_keys.txt"
 
 for i in 1 2 3; do
     key=$(echo "$vaultKeys" | grep "Unseal Key $i:" | awk '{ print $NF }')
@@ -105,33 +100,28 @@ for name in pki_int_outside pki_int_inside; do
 
     echo "Generating and signing $name"
 
-    set +e
     vault secrets enable --path="$name" pki
-    res=$?
-    set -e
 
-    if [[ $res == 0 ]]; then
-        vault secrets tune -max-lease-ttl=720h "$name"
+    vault secrets tune -max-lease-ttl=720h "$name"
 
-        vault write "$name/intermediate/generate/internal" \
-            common_name="Cerberus Systems Intermediate CA" \
-            organization="Cerberus Systems" \
-            ttl=43800h -format=json | \
-            jq -r .data.csr > "$dir/$name.csr"
+    vault write "$name/intermediate/generate/internal" \
+        common_name="Cerberus Systems Intermediate CA" \
+        organization="Cerberus Systems" \
+        ttl=43800h -format=json | \
+        jq -r .data.csr > "$dir/$name.csr"
 
-        echo "$caPass"$'\ny\ny\n' | \
-            openssl ca -extensions intermediate-ca_ext -in "$dir/$name.csr" \
-                -out "$dir/$name.crt" -days 720 -config "$dir/ca.conf" \
-                -passin stdin -notext
+    echo "$caPass"$'\ny\ny\n' | \
+        openssl ca -extensions intermediate-ca_ext -in "$dir/$name.csr" \
+            -out "$dir/$name.crt" -days 720 -config "$dir/ca.conf" \
+            -passin stdin -notext
 
-        cat "$dir/$name.crt" "$caDir/ca.crt" > "$dir/$name-chain.crt"
+    cat "$dir/$name.crt" "$caDir/ca.crt" > "$dir/$name-chain.crt"
 
-        vault write "$name/intermediate/set-signed" certificate="@$dir/$name-chain.crt"
+    vault write "$name/intermediate/set-signed" certificate="@$dir/$name-chain.crt"
 
-        vault write "$name/roles/get-cert" \
-            allowed_domains=cerberus-systems.de,cerberus-systems.com,svc.cluster.local \
-            allow_subdomains=true max_ttl=1860h
-    fi
+    vault write "$name/roles/get-cert" \
+        allowed_domains=cerberus-systems.de,cerberus-systems.com,svc.cluster.local \
+        allow_subdomains=true max_ttl=1860h
 done
 
 # Let vault generate a certificate for itself
@@ -157,30 +147,57 @@ kubectl wait --namespace=vault --for=condition=ready --timeout=3000s pods vault-
 
 ./unsealVault.sh
 
-set +e
 vault auth enable kubernetes
-res=$?
-set -e
 
-if [[ $res == 0 ]]; then
-    echo "Configuring vault kubernetes authentification"
+echo "Configuring vault kubernetes authentification"
 
-    accountPath="/run/secrets/kubernetes.io/serviceaccount"
-    kubeCert=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/ca.crt")
-    serviceToken=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/token")
+accountPath="/run/secrets/kubernetes.io/serviceaccount"
+kubeCert=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/ca.crt")
+serviceToken=$(kubectl exec --namespace=vault -it vault-0 -- sh -c "cat $accountPath/token")
 
-    echo "$kubeCert" > "$dir/kubernetes_ca.crt"
+echo "$kubeCert" > "$dir/kubernetes_ca.crt"
 
-    vault write auth/kubernetes/config \
-        kubernetes_host='https://kubernetes.default.svc.cluster.local' \
-        kubernetes_ca_cert="@$dir/kubernetes_ca.crt" \
-        token_reviewer_jwt="$serviceToken"
+vault write auth/kubernetes/config \
+    kubernetes_host='https://kubernetes.default.svc.cluster.local' \
+    kubernetes_ca_cert="@$dir/kubernetes_ca.crt" \
+    token_reviewer_jwt="$serviceToken"
 
-    dhall text --file vault/policies/get-cert.hcl.dhall \
-       | vault policy write get-cert -
+dhall text --file vault/policies/get-cert.hcl.dhall \
+   | vault policy write get-cert -
 
-    vault write auth/kubernetes/role/get-cert \
-       bound_service_account_names=default \
-       bound_service_account_namespaces='*' \
-       generate_lease=true policies=get-cert ttl=2h
-fi
+vault write auth/kubernetes/role/get-cert \
+   bound_service_account_names=default \
+   bound_service_account_namespaces='*' \
+   generate_lease=true policies=get-cert ttl=2h
+
+echo "Enabling vault key-value backend"
+vault secrets enable -version=2 kv
+
+minikube ssh "su -c 'mkdir -p /data/ldap'"
+
+dhall-to-yaml --omit-empty --documents --file ldap/ldap.dhall | \
+    kubectl apply -f -
+
+adminPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c${1:-32})
+configPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c${1:-32})
+
+echo "Saving ldap admin passwords in vault"
+echo "$configPass" | vault kv put kv/ldap config-admin=-
+echo "$adminPass" | vault kv patch kv/ldap admin=-
+
+echo "Waiting for OpenLDAP to start, this will take a while"
+kubectl wait --namespace=ldap --for=condition=ready --timeout=3000s pods openldap-0
+{ kubectl logs --namespace=ldap -f openldap-0 & } | sed -n '/slapd starting/q'
+
+sleep 2
+
+adminSHA=$(echo $adminPass | slappasswd -h {SSHA} -T /dev/fd/0)
+configSHA=$(echo $configPass | slappasswd -h {SSHA} -T /dev/fd/0)
+
+chPassLdif=$(echo "./ldap/ldif/chPassword.ldif.dhall \"$adminSHA\" \"$configSHA\"" | dhall text)
+chTreeLdif=$(echo "./ldap/ldif/chTreePassword.ldif.dhall \"$adminSHA\"" | dhall text)
+
+kubectl exec --namespace=ldap -it openldap-0 -- \
+    bash -c "echo \"$chPassLdif\" | ldapmodify -Y EXTERNAL -H ldapi://"
+kubectl exec --namespace=ldap -it openldap-0 -- \
+    bash -c "echo \"$chTreeLdif\" | ldapmodify -H ldaps://localhost -D 'cn=admin,dc=cerberus-systems,dc=de' -x -w admin"
