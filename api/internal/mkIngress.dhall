@@ -15,13 +15,15 @@ let SimpleDeployment = ../SimpleDeployment.dhall
 in    λ(input : SimpleDeployment.Type)
     → let ports = helpers.getPorts input.ingress.ingressPorts input
 
+      let subdomain = prelude.Optional.default Text input.name input.ingress.subdomain
+
       let hosts =
                   if prelude.List.null Text input.ingress.hosts
 
             then  prelude.List.map
                     Text
                     Text
-                    (utils.Text.prepend "${input.name}.")
+                    (utils.Text.prepend "${subdomain}.")
                     (utils.NonEmpty.toList Text globalSettings.hosts)
 
             else  input.ingress.hosts
