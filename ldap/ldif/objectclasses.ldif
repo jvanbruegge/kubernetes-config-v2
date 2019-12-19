@@ -1,0 +1,6 @@
+dn: cn={99}cerberussystems,cn=schema,cn=config
+objectclass: olcSchemaConfig
+cn: {99}cerberussystems
+olcObjectClasses: {0} ( 1.3.6.1.4.1.53348.1.2.1 NAME 'cerberusObject' DESC 'Cerberus Systems objects' SUP top AUXILIARY MUST displayName MAY uniqueIdentifier )
+olcObjectClasses: {1} ( 1.3.6.1.4.1.53348.1.2.2 NAME 'cerberusPerson' DESC 'Cerberus Systems people' SUP cerberusObject AUXILIARY MAY ( personalTitle $ ou $ uid ))
+olcObjectClasses: {2} ( 1.3.6.1.4.1.53348.1.2.3 NAME 'cerberusGroup' DESC 'Cerberus Systems group' SUP top STRUCTURAL MUST displayName MAY ( member $ description $ owner ))

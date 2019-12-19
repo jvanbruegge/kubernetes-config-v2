@@ -197,6 +197,13 @@ configSHA=$(echo $configPass | slappasswd -h {SSHA} -T /dev/fd/0)
 chPassLdif=$(echo "./ldap/ldif/chPassword.ldif.dhall \"$adminSHA\" \"$configSHA\"" | dhall text)
 chTreeLdif=$(echo "./ldap/ldif/chTreePassword.ldif.dhall \"$adminSHA\"" | dhall text)
 
+# First seed the DIT
+kubectl exec --namespace=ldap -it openldap-0 -- \
+    bash -c "echo \"$(< ldap/ldif/objectclasses.ldif)\" | ldapadd -Y EXTERNAL -H ldapi://"
+kubectl exec --namespace=ldap -it openldap-0 -- \
+    bash -c "echo \"$(< ldap/ldif/dit.ldif)\" | ldapadd -H ldaps://localhost -D 'cn=admin,dc=cerberus-systems,dc=de' -x -w admin"
+
+# Then change the passwords
 kubectl exec --namespace=ldap -it openldap-0 -- \
     bash -c "echo \"$chPassLdif\" | ldapmodify -Y EXTERNAL -H ldapi://"
 kubectl exec --namespace=ldap -it openldap-0 -- \

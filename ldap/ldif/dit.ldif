@@ -1,0 +1,14 @@
+dn: ou=people,dc=cerberus-systems,dc=de
+objectClass: organizationalUnit
+ou: people
+
+
+dn: ou=groups,dc=cerberus-systems,dc=de
+objectClass: organizationalUnit
+ou: groups
+
+
+dn: displayName=nextcloud,ou=groups,dc=cerberus-systems,dc=de
+objectClass: cerberusGroup
+description: All users with an account on my nextcloud
+displayName: nextcloud
