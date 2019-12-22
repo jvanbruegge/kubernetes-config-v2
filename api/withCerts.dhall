@@ -1,36 +1,133 @@
 let kube = ../kubernetes.dhall
 
+let prelude = ../prelude.dhall
+
 let Union = ../union.dhall
 
 let SimpleDeployment = ./SimpleDeployment.dhall
 
+let Certs = ./Certs.dhall
+
+let utils = ../utils.dhall
+
 let tokenPath = "/home/vault"
+
+let tokenVolume = "vault-token"
 
 let certPath = "/var/certs"
 
+let configPath = "/etc/vault"
+
+let configFile = "agent.hcl"
+
+let globalSettings = ../settings.dhall
+
 let agentConfig =
-      ''
-      exit_after_auth = true
+        λ(certs : Certs.Type)
+      → λ(input : SimpleDeployment.Type)
+      → let subdomain =
+              prelude.Optional.default Text input.namespace certs.subdomain
 
-      auto_auth {
-          method "kubernetes" {
-              mount_path = "auth/kubernetes"
-              config = {
-                  role = "get-cert"
-              }
-          }
+        let hosts =
+              prelude.List.map
+                Text
+                Text
+                (λ(x : Text) → "${subdomain}.${x}")
+                (   utils.NonEmpty.toList Text globalSettings.hosts
+                  # [ "${input.namespace}.svc.cluster.local" ]
+                )
 
-          sink "file" {
-              config = {
-                  path = "/home/vault/.vault-token"
-              }
-          }
-      }
-      ''
+        let cnBase = utils.NonEmpty.head Text globalSettings.hosts
 
-in    λ(certVolume : Text)
+        let settings =
+              prelude.Text.concatSep
+                " "
+                ( prelude.List.map
+                    Text
+                    Text
+                    (λ(x : Text) → "\"${x}\"")
+                    [ "common_name=${subdomain}.${cnBase}"
+                    , "alt_names=${prelude.Text.concatSep "," hosts}"
+                    , "ttl=720h"
+                    , "format=pem"
+                    ]
+                )
+
+        let mkContent =
+                λ(entry : Text)
+              → ''
+                    {{ with secret "pki_int_outside/issue/get-cert" ${settings} }}
+                    {{ .Data.${entry} }}
+                    {{ end }}
+                ''
+
+        let mkTemplate =
+                λ(field : Text)
+              → λ(path : Text)
+              → ''
+                template {
+                    destination = "${path}"
+                    error_on_missing_key = true
+                    contents = <<EOF
+                ${mkContent field}
+                    EOF
+                }
+                ''
+
+        let caTemplates =
+              prelude.Text.concatSep
+                "\n"
+                ( prelude.List.map
+                    Certs.File.Type
+                    Text
+                    (   λ(x : Certs.File.Type)
+                      → let subdir =
+                              prelude.Optional.default
+                                Text
+                                ""
+                                ( prelude.Optional.map
+                                    Text
+                                    Text
+                                    (λ(dir : Text) → "/${dir}")
+                                    x.subdir
+                                )
+
+                        in  mkTemplate
+                              "ca_chain"
+                              "${certPath}${subdir}/${x.name}.${x.certFileExt}"
+                    )
+                    certs.caCerts
+                )
+
+        in  ''
+            exit_after_auth = true
+
+            auto_auth {
+                method "kubernetes" {
+                    mount_path = "auth/kubernetes"
+                    config = {
+                        role = "get-cert"
+                    }
+                }
+
+                sink "file" {
+                    config = {
+                        path = "${tokenPath}/.vault-token"
+                    }
+                }
+            }
+
+            vault {
+                address = "https://vault.vault.svc.cluster.local:8300"
+                tls_skip_verify = true
+            }
+
+            ${caTemplates}
+            ''
+
+in    λ(certs : Certs.Type)
     → λ(input : SimpleDeployment.Type)
-    → let agentConfigMapName = "vault-agent-${certVolume}-config"
+    → let agentConfigMapName = "vault-agent-${certs.volumeName}-config"
 
       let configMap =
             kube.ConfigMap::{
@@ -39,28 +136,27 @@ in    λ(certVolume : Text)
                 , name = agentConfigMapName
                 , namespace = Some input.namespace
                 }
-            , data = [ { mapKey = "agent.hcl", mapValue = agentConfig } ]
+            , data =
+                [ { mapKey = configFile, mapValue = agentConfig certs input } ]
             }
 
       let vaultAgent =
             kube.Container::{
-            , name = "vault-agent-${certVolume}"
+            , name = "vault-agent-${certs.volumeName}"
             , image = Some "registry.hub.docker.com/library/vault:1.3.0"
-            , args = [ "agent", "-config=/etc/vault/agent.hcl" ]
-            , env =
-                [ kube.EnvVar::{
-                  , name = "VAULT_ADDR"
-                  , value = Some "https://vault.vault.svc.cluster.local:8300"
-                  }
-                , kube.EnvVar::{
-                  , name = "VAULT_SKIP_VERIFY"
-                  , value = Some "true"
-                  }
-                ]
+            , args = [ "agent", "-config=${configPath}/${configFile}" ]
             , volumeMounts =
                 [ kube.VolumeMount::{
-                  , mountPath = "/etc/vault"
+                  , mountPath = configPath
                   , name = agentConfigMapName
+                  }
+                , kube.VolumeMount::{
+                  , mountPath = tokenPath
+                  , name = tokenVolume
+                  }
+                , kube.VolumeMount::{
+                  , mountPath = certPath
+                  , name = certs.volumeName
                   }
                 ]
             }
@@ -77,6 +173,16 @@ in    λ(certVolume : Text)
                           kube.ConfigMapVolumeSource::{
                           , name = Some agentConfigMapName
                           }
+                    }
+                  , kube.Volume::{
+                    , name = tokenVolume
+                    , emptyDir =
+                        kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
+                    }
+                  , kube.Volume::{
+                    , name = certs.volumeName
+                    , emptyDir =
+                        kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
                     }
                   ]
                 # input.volumes

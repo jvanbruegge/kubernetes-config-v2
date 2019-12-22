@@ -9,4 +9,5 @@
 , SimpleDeployment = ./api/SimpleDeployment.dhall
 , Ingress = ./api/Ingress.dhall
 , Volume = ./api/Volume.dhall
+, Certs = ./api/Certs.dhall
 }

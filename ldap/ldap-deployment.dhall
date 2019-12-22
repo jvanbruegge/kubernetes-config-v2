@@ -56,4 +56,11 @@ in    λ(input : ./Settings.dhall)
                 ]
             }
 
-      in  api.mkStatefulSet (api.withCerts "certs" config)
+      let certs =
+            api.Certs::{
+            , volumeName = "certs"
+            , caCerts = [ api.Certs.File::{ name = "ldap" } ]
+            , certs = [ api.Certs.File::{ name = "ca" } ]
+            }
+
+      in  api.mkStatefulSet (api.withCerts certs config)
