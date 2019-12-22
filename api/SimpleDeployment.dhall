@@ -1,5 +1,7 @@
 let kube = ../kubernetes.dhall
 
+let Union = ../union.dhall
+
 let Ingress = ./Ingress.dhall
 
 let Deployment =
@@ -13,6 +15,7 @@ let Deployment =
       , servicePorts : Optional (List Natural)
       , ingress : Ingress.Type
       , volumes : List kube.Volume.Type
+      , extraDocuments : List Union
       }
 
 let default =
@@ -24,6 +27,7 @@ let default =
       , servicePorts = None (List Natural)
       , ingress = Ingress.default
       , volumes = [] : List kube.Volume.Type
+      , extraDocuments = [] : List Union
       }
 
 in  { Type = Deployment, default = default }

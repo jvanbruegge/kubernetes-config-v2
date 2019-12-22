@@ -8,6 +8,8 @@ let dataPath = "/vault"
 
 let vaultPort = 8200
 
+let internalPort = 8300
+
 let volumeName = "vault-data"
 
 let vaultContainer =
@@ -30,6 +32,7 @@ let vaultContainer =
                   ( ./vault-config.dhall
                       { path = dataPath
                       , port = vaultPort
+                      , internalPort = internalPort
                       , certPath = "${dataPath}/ssl"
                       , certName = None Text
                       }
@@ -49,6 +52,11 @@ let vaultContainer =
             , name = Some "vault-port"
             , protocol = Some "TCP"
             }
+          , kube.ContainerPort::{
+            , containerPort = internalPort
+            , name = Some "internal-port"
+            , protocol = Some "TCP"
+            }
           ]
       , volumeMounts =
           [ kube.VolumeMount::{ mountPath = dataPath, name = volumeName } ]
@@ -64,6 +72,7 @@ in    λ(input : ./Settings.dhall)
             , ingress =
                 api.Ingress::{
                 , annotations = [ ann.sslPassthrough, ann.sslRedirect ]
+                , ingressPorts = Some [ vaultPort ]
                 }
             , volumes =
                 [ kube.Volume::{

@@ -33,7 +33,13 @@ let getPorts =
                     (λ(x : kube.ContainerPort.Type) → x.containerPort)
                     containerPorts
                 )
-                xs
+                ( prelude.Optional.fold
+                    (List Natural)
+                    xs
+                    (Optional (List Natural))
+                    (λ(x : List Natural) → Some x)
+                    input.servicePorts
+                )
 
         in  prelude.List.filter
               kube.ContainerPort.Type

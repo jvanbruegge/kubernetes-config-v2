@@ -56,4 +56,4 @@ in    λ(input : ./Settings.dhall)
                 ]
             }
 
-      in  api.mkStatefulSet config
+      in  api.mkStatefulSet (api.withCerts "certs" config)

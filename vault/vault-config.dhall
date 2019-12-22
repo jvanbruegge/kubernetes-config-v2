@@ -3,6 +3,7 @@ let prelude = ../prelude.dhall
 in    λ ( i
         : { path : Text
           , port : Natural
+          , internalPort : Natural
           , certPath : Text
           , certName : Optional Text
           }
@@ -23,5 +24,11 @@ in    λ ( i
             tls_cert_file = "${i.certPath}/${name}.crt"
             tls_client_ca_file = "${i.certPath}/ca.crt"
             tls_require_and_verify_client_cert = true
+          }
+
+          listener "tcp" {
+            address = "0.0.0.0:${Natural/show i.internalPort}"
+            tls_key_file = "${i.certPath}/${name}.key"
+            tls_cert_file = "${i.certPath}/${name}.crt"
           }
           ''

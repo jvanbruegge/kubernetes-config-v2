@@ -23,6 +23,10 @@ set -e
 
 [ -d "$dir" ] && rm -r "$dir"
 
+for f in $(< services.txt); do
+    minikube ssh "su -c 'mkdir -p /data/$f'"
+done
+
 # Set up certificates
 cd openssl
 ./generateCA.sh "$caDir" "$caPass"
@@ -127,7 +131,8 @@ done
 # Let vault generate a certificate for itself
 for name in vault vault-operator; do
     result=$(vault write "pki_int_outside/issue/get-cert" -format="json" \
-        common_name="$name.cerberus-systems.de")
+        common_name="$name.cerberus-systems.de" \
+        alt_names="$name.cerberus-systems.com,$name.$name.svc.cluster.local")
 
     echo "$result" | jq -r '.data.certificate' > "$dir/$name.crt"
     echo "$result" | jq -r '.data.private_key' > "$dir/$name.key"
@@ -172,8 +177,6 @@ vault write auth/kubernetes/role/get-cert \
 
 echo "Enabling vault key-value backend"
 vault secrets enable -version=2 kv
-
-minikube ssh "su -c 'mkdir -p /data/ldap'"
 
 dhall-to-yaml --omit-empty --documents --file ldap/ldap.dhall | \
     kubectl apply -f -

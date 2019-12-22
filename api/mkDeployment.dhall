@@ -22,6 +22,7 @@ in    λ(input : SimpleDeployment.Type)
                   }
             }
 
-      in    [ Union.Deployment deployment ]
+      in    input.extraDocuments
+          # [ Union.Deployment deployment ]
           # ./internal/mkService.dhall input
           # ./internal/mkIngress.dhall input
