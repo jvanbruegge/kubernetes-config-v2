@@ -6,6 +6,8 @@ let api = ../api.dhall
 
 let globalSettings = ../settings.dhall
 
+let helpers = ../api/internal/helpers.dhall
+
 let mkContainer =
         λ ( input
           : { configMapName : Text, tcpConfigMapName : Text, namespace : Text }
@@ -84,12 +86,14 @@ in    λ(input : ./Settings.dhall)
                 , name = "haproxy-tcp-config"
                 , namespace = Some input.namespace
                 }
+            , data = [ { mapKey = "636", mapValue = "ldap/openldap:636" } ]
             }
 
       let config =
             api.SimpleDeployment::{
             , name = "haproxy"
             , namespace = input.namespace
+            , servicePorts = Some ([] : List Natural)
             , containers =
                 [ mkContainer
                     { configMapName = configMap.metadata.name
@@ -102,5 +106,33 @@ in    λ(input : ./Settings.dhall)
             , ingress = api.noIngress
             }
 
+      let mkServicePort =
+              λ(port : Natural)
+            → λ(name : Text)
+            → kube.ServicePort::{
+              , port = port
+              , name = Some name
+              , protocol = Some "TCP"
+              , targetPort = Some (< Int : Natural | String : Text >.Int port)
+              }
+
+      let service =
+            kube.Service::{
+            , metadata = helpers.mkMeta config
+            , spec =
+                Some
+                  kube.ServiceSpec::{
+                  , ports =
+                      [ mkServicePort 80 "http"
+                      , mkServicePort 443 "https"
+                      , mkServicePort 1936 "stats"
+                      , mkServicePort 636 "ldaps"
+                      ]
+                  , selector = helpers.mkSelector config
+                  , externalIPs = config.externalIPs
+                  }
+            }
+
       in    [ union.ConfigMap configMap, union.ConfigMap tcpConfigMap ]
           # api.mkDeployment config
+          # [ union.Service service ]

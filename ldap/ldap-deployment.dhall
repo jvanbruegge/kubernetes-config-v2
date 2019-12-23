@@ -2,11 +2,15 @@ let kube = ../kubernetes.dhall
 
 let api = ../api.dhall
 
+let ann = ../haproxy/annotations.dhall
+
 let utils = ../utils.dhall
 
 let globalSettings = ../settings.dhall
 
 let volumeName = "ldap-data"
+
+let certVolume = "ldap-certs"
 
 let ldapContainer =
       kube.Container::{
@@ -37,6 +41,10 @@ let ldapContainer =
             , name = volumeName
             , subPath = Some "config"
             }
+          , kube.VolumeMount::{
+            , mountPath = "/container/service/slapd/assets/certs"
+            , name = certVolume
+            }
           ]
       }
 
@@ -58,9 +66,9 @@ in    λ(input : ./Settings.dhall)
 
       let certs =
             api.Certs::{
-            , volumeName = "certs"
-            , caCerts = [ api.Certs.File::{ name = "ldap" } ]
-            , certs = [ api.Certs.File::{ name = "ca" } ]
+            , volumeName = certVolume
+            , caCerts = [ api.Certs.File::{ name = "ca" } ]
+            , certs = [ api.Certs.File::{ name = "ldap" } ]
             }
 
       in  api.mkStatefulSet (api.withCerts certs config)

@@ -74,30 +74,35 @@ let agentConfig =
                 }
                 ''
 
-        let caTemplates =
-              prelude.Text.concatSep
-                "\n"
-                ( prelude.List.map
-                    Certs.File.Type
-                    Text
-                    (   λ(x : Certs.File.Type)
-                      → let subdir =
-                              prelude.Optional.default
-                                Text
-                                ""
-                                ( prelude.Optional.map
-                                    Text
-                                    Text
-                                    (λ(dir : Text) → "/${dir}")
-                                    x.subdir
-                                )
+        let mkFieldTemplate =
+                λ(field : Text)
+              → λ(cert : Bool)
+              → λ(list : List Certs.File.Type)
+              → prelude.Text.concatSep
+                  "\n"
+                  ( prelude.List.map
+                      Certs.File.Type
+                      Text
+                      (   λ(x : Certs.File.Type)
+                        → let subdir =
+                                prelude.Optional.default
+                                  Text
+                                  ""
+                                  ( prelude.Optional.map
+                                      Text
+                                      Text
+                                      (λ(dir : Text) → "/${dir}")
+                                      x.subdir
+                                  )
 
-                        in  mkTemplate
-                              "ca_chain"
-                              "${certPath}${subdir}/${x.name}.${x.certFileExt}"
-                    )
-                    certs.caCerts
-                )
+                          let ext = if cert then x.certFileExt else x.keyFileExt
+
+                          in  mkTemplate
+                                field
+                                "${certPath}${subdir}/${x.name}.${ext}"
+                      )
+                      list
+                  )
 
         in  ''
             exit_after_auth = true
@@ -122,7 +127,11 @@ let agentConfig =
                 tls_skip_verify = true
             }
 
-            ${caTemplates}
+            ${mkFieldTemplate "ca_chain" True certs.caCerts}
+
+            ${mkFieldTemplate "certificate" True certs.certs}
+
+            ${mkFieldTemplate "private_key" False certs.certs}
             ''
 
 in    λ(certs : Certs.Type)
