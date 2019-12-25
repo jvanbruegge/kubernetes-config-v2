@@ -2,8 +2,6 @@ let kube = ../kubernetes.dhall
 
 let api = ../api.dhall
 
-let ann = ../haproxy/annotations.dhall
-
 let utils = ../utils.dhall
 
 let globalSettings = ../settings.dhall
@@ -15,7 +13,7 @@ let certVolume = "ldap-certs"
 let ldapContainer =
       kube.Container::{
       , name = "openldap"
-      , image = Some "registry.hub.docker.com/osixia/openldap:1.3.0"
+      , image = Some "registry.hub.docker.com/cerberussystems/openldap:1.3.1"
       , env =
           [ kube.EnvVar::{
             , name = "LDAP_ORGANISATION"
@@ -26,7 +24,6 @@ let ldapContainer =
             , value = Some (utils.NonEmpty.head Text globalSettings.hosts)
             }
           , kube.EnvVar::{ name = "LDAP_TLS_ENFORCE", value = Some "true" }
-          , kube.EnvVar::{ name = "LDAP_ADMIN_PASSWORD", value = Some "admin" }
           ]
       , ports =
           [ kube.ContainerPort::{ containerPort = 636, name = Some "ldaps" } ]

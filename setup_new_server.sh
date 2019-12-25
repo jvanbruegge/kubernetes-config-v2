@@ -195,8 +195,8 @@ kubectl wait --namespace=ldap --for=condition=ready --timeout=3000s pods openlda
 
 sleep 2
 
-adminSHA=$(echo $adminPass | slappasswd -h {SSHA} -T /dev/fd/0)
-configSHA=$(echo $configPass | slappasswd -h {SSHA} -T /dev/fd/0)
+adminSHA=$(slappasswd -h {SSHA} -s "$adminPass")
+configSHA=$(slappasswd -h {SSHA} -s "$configPass")
 
 chPassLdif=$(echo "./ldap/ldif/chPassword.ldif.dhall \"$adminSHA\" \"$configSHA\"" | dhall text)
 chTreeLdif=$(echo "./ldap/ldif/chTreePassword.ldif.dhall \"$adminSHA\"" | dhall text)
@@ -220,3 +220,7 @@ sleep 4
 
 kubectl exec --namespace=ldap -it openldap-0 -- \
     bash -c "echo \"$chTreeLdif\" | ldapmodify -H ldaps://ldap.cerberus-systems.de -D 'cn=admin,dc=cerberus-systems,dc=de' -x -w admin"
+
+echo "Deploying phpldapadmin"
+dhall-to-yaml --omit-empty --documents --file phpldapadmin/phpldapadmin.dhall | \
+    kubectl apply -f -

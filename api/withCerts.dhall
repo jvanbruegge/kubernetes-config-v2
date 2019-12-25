@@ -54,28 +54,42 @@ let agentConfig =
                 )
 
         let mkContent =
-                λ(entry : Text)
-              → ''
+                λ(list : Bool)
+              → λ(entry : Text)
+              → let data =
+                            if list
+
+                      then  ''
+                            {{ range .Data.${entry} }}
+                            {{ . }}
+                            {{ end }}
+                            ''
+
+                      else  "{{ .Data.${entry} }}"
+
+                in  ''
                     {{ with secret "pki_int_outside/issue/get-cert" ${settings} }}
-                    {{ .Data.${entry} }}
+                    ${data}
                     {{ end }}
-                ''
+                    ''
 
         let mkTemplate =
                 λ(field : Text)
+              → λ(list : Bool)
               → λ(path : Text)
               → ''
                 template {
                     destination = "${path}"
                     error_on_missing_key = true
                     contents = <<EOF
-                ${mkContent field}
+                ${mkContent list field}
                     EOF
                 }
                 ''
 
         let mkFieldTemplate =
                 λ(field : Text)
+              → λ(isList : Bool)
               → λ(cert : Bool)
               → λ(list : List Certs.File.Type)
               → prelude.Text.concatSep
@@ -99,6 +113,7 @@ let agentConfig =
 
                           in  mkTemplate
                                 field
+                                isList
                                 "${certPath}${subdir}/${x.name}.${ext}"
                       )
                       list
@@ -127,11 +142,11 @@ let agentConfig =
                 tls_skip_verify = true
             }
 
-            ${mkFieldTemplate "ca_chain" True certs.caCerts}
+            ${mkFieldTemplate "ca_chain" True True certs.caCerts}
 
-            ${mkFieldTemplate "certificate" True certs.certs}
+            ${mkFieldTemplate "certificate" False True certs.certs}
 
-            ${mkFieldTemplate "private_key" False certs.certs}
+            ${mkFieldTemplate "private_key" False False certs.certs}
             ''
 
 in    λ(certs : Certs.Type)
