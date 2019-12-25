@@ -23,7 +23,7 @@ set -e
 
 [ -d "$dir" ] && rm -r "$dir"
 
-for f in $(< services.txt); do
+for f in $(grep -rl mkVolume . | grep -v api.dhall | xargs -I% basename % .dhall); do
     minikube ssh "su -c 'mkdir -p /data/$f'"
 done
 
