@@ -9,16 +9,14 @@ let utils = ../../utils.dhall
 let Volume = ../Volume.dhall
 
 in    λ(input : Volume.Type)
-    → let directory = prelude.Optional.default Text input.namespace input.directory
+    → let directory =
+            prelude.Optional.default Text input.namespace input.directory
 
-    let name = prelude.Optional.default Text input.namespace input.name
+      let name = prelude.Optional.default Text input.namespace input.name
 
       in  kube.PersistentVolume::{
           , metadata =
-              kube.ObjectMeta::{
-              , name = name
-              , namespace = Some input.namespace
-              }
+              kube.ObjectMeta::{ name = name, namespace = Some input.namespace }
           , spec =
               Some
                 kube.PersistentVolumeSpec::{

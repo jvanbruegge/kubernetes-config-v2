@@ -2,8 +2,6 @@ let kube = ../kubernetes.dhall
 
 let prelude = ../prelude.dhall
 
-let Union = ../union.dhall
-
 let SimpleDeployment = ./SimpleDeployment.dhall
 
 let helpers = ./internal/helpers.dhall
@@ -45,6 +43,6 @@ in    λ(input : SimpleDeployment.Type)
               }
 
       in    input.extraDocuments
-          # [ Union.StatefulSet set ]
+          # [ kube.Resource.StatefulSet set ]
           # ./internal/mkService.dhall input2
           # ./internal/mkIngress.dhall input2

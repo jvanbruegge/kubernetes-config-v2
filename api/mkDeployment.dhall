@@ -1,7 +1,5 @@
 let kube = ../kubernetes.dhall
 
-let Union = ../union.dhall
-
 let SimpleDeployment = ./SimpleDeployment.dhall
 
 let helpers = ./internal/helpers.dhall
@@ -23,6 +21,6 @@ in    λ(input : SimpleDeployment.Type)
             }
 
       in    input.extraDocuments
-          # [ Union.Deployment deployment ]
+          # [ kube.Resource.Deployment deployment ]
           # ./internal/mkService.dhall input
           # ./internal/mkIngress.dhall input

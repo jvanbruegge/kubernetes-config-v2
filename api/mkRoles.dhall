@@ -2,8 +2,6 @@ let kube = ../kubernetes.dhall
 
 let prelude = ../prelude.dhall
 
-let Union = ../union.dhall
-
 let Rule = kube.PolicyRule.Type
 
 let Roles = ./Roles.dhall
@@ -11,8 +9,8 @@ let Roles = ./Roles.dhall
 let f =
         λ(a : Type)
       → λ(xs : List a)
-      → λ(x : Union)
-      → if prelude.List.null a xs then [] : List Union else [ x ]
+      → λ(x : kube.Resource)
+      → if prelude.List.null a xs then [] : List kube.Resource else [ x ]
 
 let g =
         λ(xs : List Rule)
@@ -25,7 +23,7 @@ in    λ(i : Roles.Type)
       let serviceAccount =
                   if i.createAccount
 
-            then  [ Union.ServiceAccount
+            then  [ kube.Resource.ServiceAccount
                       kube.ServiceAccount::{
                       , metadata =
                           kube.ObjectMeta::{
@@ -35,20 +33,20 @@ in    λ(i : Roles.Type)
                       }
                   ]
 
-            else  [] : List Union
+            else  [] : List kube.Resource
 
       let clusterRole =
             f
               Rule
               i.clusterRules
-              ( Union.ClusterRole
+              ( kube.Resource.ClusterRole
                   kube.ClusterRole::{ metadata = meta, rules = i.clusterRules }
               )
 
       let clusterBinding =
                   if g i.clusterRules i.createClusterBinding
 
-            then  [ Union.ClusterRoleBinding
+            then  [ kube.Resource.ClusterRoleBinding
                       kube.ClusterRoleBinding::{
                       , metadata = meta
                       , roleRef =
@@ -70,18 +68,20 @@ in    λ(i : Roles.Type)
                       }
                   ]
 
-            else  [] : List Union
+            else  [] : List kube.Resource
 
       let role =
             f
               Rule
               i.rules
-              (Union.Role kube.Role::{ metadata = meta, rules = i.rules })
+              ( kube.Resource.Role
+                  kube.Role::{ metadata = meta, rules = i.rules }
+              )
 
       let roleBinding =
                   if g i.rules i.createRoleBinding
 
-            then  [ Union.RoleBinding
+            then  [ kube.Resource.RoleBinding
                       kube.RoleBinding::{
                       , metadata = meta
                       , roleRef =
@@ -100,7 +100,7 @@ in    λ(i : Roles.Type)
                       }
                   ]
 
-            else  [] : List Union
+            else  [] : List kube.Resource
 
       in    serviceAccount # clusterRole # clusterBinding # role # roleBinding
-          : List Union
+          : List kube.Resource

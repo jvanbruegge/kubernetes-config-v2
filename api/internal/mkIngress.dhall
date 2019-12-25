@@ -1,5 +1,3 @@
-let Union = ../../union.dhall
-
 let kube = ../../kubernetes.dhall
 
 let prelude = ../../prelude.dhall
@@ -15,7 +13,8 @@ let SimpleDeployment = ../SimpleDeployment.dhall
 in    λ(input : SimpleDeployment.Type)
     → let ports = helpers.getPorts input.ingress.ingressPorts input
 
-      let subdomain = prelude.Optional.default Text input.name input.ingress.subdomain
+      let subdomain =
+            prelude.Optional.default Text input.name input.ingress.subdomain
 
       let hosts =
                   if prelude.List.null Text input.ingress.hosts
@@ -56,9 +55,9 @@ in    λ(input : SimpleDeployment.Type)
       let ingress =
                   if prelude.List.null kube.ContainerPort.Type ports
 
-            then  [] : List Union
+            then  [] : List kube.Resource
 
-            else  [ Union.Ingress
+            else  [ kube.Resource.Ingress
                       kube.Ingress::{
                       , metadata =
                           kube.ObjectMeta::{

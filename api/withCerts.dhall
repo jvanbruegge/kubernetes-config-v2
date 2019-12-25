@@ -2,8 +2,6 @@ let kube = ../kubernetes.dhall
 
 let prelude = ../prelude.dhall
 
-let Union = ../union.dhall
-
 let SimpleDeployment = ./SimpleDeployment.dhall
 
 let Certs = ./Certs.dhall
@@ -187,7 +185,7 @@ in    λ(certs : Certs.Type)
 
       in    input
           ⫽ { extraDocuments =
-                [ Union.ConfigMap configMap ] # input.extraDocuments
+                [ kube.Resource.ConfigMap configMap ] # input.extraDocuments
             , initContainers = [ vaultAgent ] # input.initContainers
             , volumes =
                   [ kube.Volume::{

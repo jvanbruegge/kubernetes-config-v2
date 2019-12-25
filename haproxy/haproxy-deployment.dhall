@@ -1,7 +1,5 @@
 let kube = ../kubernetes.dhall
 
-let union = ../union.dhall
-
 let api = ../api.dhall
 
 let globalSettings = ../settings.dhall
@@ -133,6 +131,8 @@ in    λ(input : ./Settings.dhall)
                   }
             }
 
-      in    [ union.ConfigMap configMap, union.ConfigMap tcpConfigMap ]
+      in    [ kube.Resource.ConfigMap configMap
+            , kube.Resource.ConfigMap tcpConfigMap
+            ]
           # api.mkDeployment config
-          # [ union.Service service ]
+          # [ kube.Resource.Service service ]

@@ -9,7 +9,7 @@ let certVolume = "ldap-certs"
 let globalSettings = ../settings.dhall
 
 let phpldapadmin_config =
-"#PYTHON2BASH:[{'ldaps://ldap.cerberus-systems.de:636/': [{'server': [{'tls': 'false', 'base': 'array(\\'cn=config\\', \\'dc=cerberus-systems,dc=de\\')'}]}]}]"
+      "#PYTHON2BASH:[{'ldaps://ldap.cerberus-systems.de:636/': [{'server': [{'tls': 'false', 'base': 'array(\\'cn=config\\', \\'dc=cerberus-systems,dc=de\\')'}]}]}]"
 
 let host = utils.NonEmpty.head Text globalSettings.hosts
 
@@ -24,7 +24,10 @@ let adminContainer =
             , name = "PHPLDAPADMIN_LDAP_HOSTS"
             , value = Some phpldapadmin_config
             }
-            , kube.EnvVar::{ name = "HOSTNAME", value = Some "phpldapadmin.${host}" }
+          , kube.EnvVar::{
+            , name = "HOSTNAME"
+            , value = Some "phpldapadmin.${host}"
+            }
           ]
       , ports =
           [ kube.ContainerPort::{ containerPort = 443, name = Some "https" } ]

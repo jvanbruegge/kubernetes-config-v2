@@ -1,7 +1,5 @@
 let SimpleDeployment = ../SimpleDeployment.dhall
 
-let Union = ../../union.dhall
-
 let kube = ../../kubernetes.dhall
 
 let prelude = ../../prelude.dhall
@@ -28,9 +26,9 @@ in    λ(input : SimpleDeployment.Type)
       let service =
                   if prelude.List.null kube.ServicePort.Type ports
 
-            then  [] : List Union
+            then  [] : List kube.Resource
 
-            else  [ Union.Service
+            else  [ kube.Resource.Service
                       kube.Service::{
                       , metadata = helpers.mkMeta input
                       , spec =
