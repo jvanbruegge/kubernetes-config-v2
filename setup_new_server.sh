@@ -224,3 +224,9 @@ kubectl exec --namespace=ldap -it openldap-0 -- \
 echo "Deploying phpldapadmin"
 dhall-to-yaml --omit-empty --documents --file phpldapadmin/phpldapadmin.dhall | \
     kubectl apply -f -
+
+echo "Creating custom resources for cert-manager"
+kubectl apply -f ./cert-manager/customResources.yaml
+echo "Deploying cert-manager"
+dhall-to-yaml --omit-empty --documents --file ./cert-manager/cert-manager.dhall | \
+    kubectl apply -f -
