@@ -52,6 +52,27 @@ in    λ(input : SimpleDeployment.Type)
                 )
                 hosts
 
+      let tls =
+                  if input.ingress.requestCertificate
+
+            then  [ kube.IngressTLS::{
+                    , hosts = hosts
+                    , secretName = Some "${input.name}-letsencrypt-cert"
+                    }
+                  ]
+
+            else  [] : List kube.IngressTLS.Type
+
+      let certAnnotation =
+                  if input.ingress.requestCertificate
+
+            then  [ { mapKey = "cert-manager.io/cluster-issuer"
+                    , mapValue = "letsencrypt-prod"
+                    }
+                  ]
+
+            else  [] : List { mapKey : Text, mapValue : Text }
+
       let ingress =
                   if prelude.List.null kube.ContainerPort.Type ports
 
@@ -62,7 +83,8 @@ in    λ(input : SimpleDeployment.Type)
                       , metadata =
                           kube.ObjectMeta::{
                           , name = input.name
-                          , annotations = input.ingress.annotations
+                          , annotations =
+                              certAnnotation # input.ingress.annotations
                           , namespace = Some input.namespace
                           }
                       , spec =
@@ -74,6 +96,7 @@ in    λ(input : SimpleDeployment.Type)
                                   kube.IngressRule.Type
                                   mkIngressRule
                                   ports
+                            , tls = tls
                             }
                       }
                   ]

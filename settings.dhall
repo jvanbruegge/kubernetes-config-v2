@@ -18,5 +18,6 @@ in  { hosts = hosts
     , organizationalUnitName = None Text
     , commonName = "Cerberus Systems Root Certificate Authority"
     , emailAddress = "ca@cerberus-systems.de"
+    , userEmail = "jan@vanbruegge.de"
     , authInfoAccess = "https://static.cerberus-systems.de/certs/ca.crt"
     }

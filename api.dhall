@@ -10,6 +10,7 @@ in  { mkRoles = ./api/mkRoles.dhall
     , noIngress = Ingress::{ ingressPorts = Some ([] : List Natural) }
     , sslPassthrough =
         Ingress::{ annotations = [ ann.sslPassthrough, ann.sslRedirect ] }
+    , letsencrypt = Ingress::{ requestCertificate = True }
     , withCerts = ./api/withCerts.dhall
     , Roles = ./api/Roles.dhall
     , SimpleDeployment = ./api/SimpleDeployment.dhall
