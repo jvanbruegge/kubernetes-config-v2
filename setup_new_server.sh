@@ -58,11 +58,8 @@ function transferVaultCert() {
 transferVaultCert
 
 # Deploy HAProxy & vault
-dhall-to-yaml --omit-empty --documents --file haproxy/haproxy.dhall | \
-    kubectl apply -f -
-
-dhall-to-yaml --omit-empty --documents --file vault/vault.dhall | \
-    kubectl apply -f -
+./applyDir.sh haproxy
+./applyDir.sh vault
 
 echo "Waiting for vault to start up"
 
@@ -143,8 +140,7 @@ transferVaultCert
 kubectl delete --namespace=vault statefulsets.apps vault
 kubectl wait --namespace=vault --for=delete --timeout=3000s pods vault-0
 
-dhall-to-yaml --omit-empty --documents --file vault/vault.dhall | \
-    kubectl apply -f -
+./applyDir.sh vault
 
 export VAULT_CACERT="$dir/pki_int_outside.crt"
 sleep 5
@@ -178,8 +174,7 @@ vault write auth/kubernetes/role/get-cert \
 echo "Enabling vault key-value backend"
 vault secrets enable -version=2 kv
 
-dhall-to-yaml --omit-empty --documents --file ldap/ldap.dhall | \
-    kubectl apply -f -
+./applyDir.sh ldap
 
 adminPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c${1:-32})
 configPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c${1:-32})
@@ -222,11 +217,7 @@ kubectl exec --namespace=ldap -it openldap-0 -- \
     bash -c "echo \"$chTreeLdif\" | ldapmodify -H ldaps://ldap.cerberus-systems.de -D 'cn=admin,dc=cerberus-systems,dc=de' -x -w admin"
 
 echo "Deploying phpldapadmin"
-dhall-to-yaml --omit-empty --documents --file phpldapadmin/phpldapadmin.dhall | \
-    kubectl apply -f -
+./applyDir.sh phpldapadmin
 
-echo "Creating custom resources for cert-manager"
-kubectl apply -f ./cert-manager/customResources.yaml
 echo "Deploying cert-manager"
-dhall-to-yaml --omit-empty --documents --file ./cert-manager/cert-manager.dhall | \
-    kubectl apply -f -
+./applyDir.sh "cert-manager"
