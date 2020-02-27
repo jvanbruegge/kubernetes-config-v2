@@ -13,7 +13,7 @@ let certVolume = "ldap-certs"
 let ldapContainer =
       kube.Container::{
       , name = "openldap"
-      , image = Some "registry.hub.docker.com/cerberussystems/openldap:1.3.1"
+      , image = Some "registry.hub.docker.com/osixia/openldap:1.3.0"
       , env =
           [ kube.EnvVar::{
             , name = "LDAP_ORGANISATION"
@@ -23,6 +23,7 @@ let ldapContainer =
             , name = "LDAP_DOMAIN"
             , value = Some (utils.NonEmpty.head Text globalSettings.hosts)
             }
+          , kube.EnvVar::{ name = "KEEP_EXISTING_CONFIG", value = Some "true" }
           , kube.EnvVar::{ name = "LDAP_TLS_ENFORCE", value = Some "true" }
           ]
       , ports =
