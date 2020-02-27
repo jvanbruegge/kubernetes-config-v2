@@ -1,4 +1,6 @@
 generated/
 ca/
+.vagrant/
 
 vault_keys.txt
+*.log
