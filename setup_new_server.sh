@@ -41,4 +41,6 @@ function runStep() {
     fi
 }
 
-runStep install-kubernetes
+runStep generate-certificates
+
+# runStep install-kubernetes
