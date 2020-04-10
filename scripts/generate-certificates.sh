@@ -41,7 +41,7 @@ function generateCert() {
     if [ ! -e "$dir/$name.key" ] || [ ! -e "$dir/$name.crt" ]; then
         echo "Generating client certificate for $name"
 
-        echo "./openssl/server.conf.dhall \"$name\"" | dhall text > "$dir/$name.conf"
+        echo "(./openssl/kubernetes.dhall).$name" | dhall text > "$dir/$name.conf"
 
         openssl req -new -nodes -newkey rsa:4096 -keyout "$dir/$name.key" \
             -out "$dir/$name.csr" -config "$dir/$name.conf"
@@ -55,4 +55,19 @@ function generateCert() {
 
 mkdir -p "$dir"
 
-generateCert "certtest"
+generateCert "admin"
+generateCert "kubelet"
+generateCert "kubeControllerManager"
+generateCert "kubeProxy"
+generateCert "kubeScheduler"
+generateCert "kubernetes"
+generateCert "serviceAccount"
+
+echo ""
+echo "Transfering certificates to server"
+cd generated
+for f in *.key; do
+    cert="$(basename -s .key "$f").crt"
+    $SSH_COMMAND "cat > $cert" < "$cert"
+    $SSH_COMMAND "cat > $f" < "$f"
+done
