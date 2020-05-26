@@ -12,7 +12,7 @@ let mkSelector =
 
 let mkMeta =
         λ(input : SimpleDeployment.Type)
-      → kube.ObjectMeta::{ name = input.name, namespace = Some input.namespace }
+      → kube.ObjectMeta::{ name = Some input.name, namespace = Some input.namespace }
 
 let ContainerPort = kube.ContainerPort.Type
 

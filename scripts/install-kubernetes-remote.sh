@@ -50,4 +50,7 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7fa
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7faccdfe7b3c09097105e68030ea7/Documentation/k8s-manifests/kube-flannel-rbac.yml
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
+sudo mkdir -p /data
+sudo chown -R "$SERVER_USER:$SERVER_USER" /data
+
 kubectl wait --for=condition=ready --timeout=120s nodes/kube-master > /dev/null

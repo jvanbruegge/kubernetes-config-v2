@@ -16,7 +16,7 @@ in    λ(input : SimpleDeployment.Type)
                   , serviceName = input.name
                   , selector =
                       kube.LabelSelector::{
-                      , matchLabels = helpers.mkSelector input
+                      , matchLabels = Some (helpers.mkSelector input)
                       }
                   , template = ./internal/mkTemplate.dhall input
                   , replicas = Some input.replicas

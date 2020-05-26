@@ -13,7 +13,7 @@ in    λ(input : SimpleDeployment.Type)
                   kube.DeploymentSpec::{
                   , selector =
                       kube.LabelSelector::{
-                      , matchLabels = helpers.mkSelector input
+                      , matchLabels = Some (helpers.mkSelector input)
                       }
                   , template = ./internal/mkTemplate.dhall input
                   , replicas = Some input.replicas

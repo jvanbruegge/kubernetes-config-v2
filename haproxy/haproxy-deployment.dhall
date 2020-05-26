@@ -14,16 +14,16 @@ let mkContainer =
         , name = "haproxy-ingress"
         , image = Some "quay.io/jcmoraisjr/haproxy-ingress:v0.7"
         , imagePullPolicy = Some "IfNotPresent"
-        , args =
+        , args = Some
             [ "--default-backend-service=${input.namespace}/ingress-default-backend"
             , "--configmap=${input.namespace}/${input.configMapName}"
             , "--tcp-services-configmap=${input.namespace}/${input.tcpConfigMapName}"
             , "--reload-strategy=native"
             ]
-        , env =
+        , env = Some
             [ { name = "POD_NAME"
               , value = None Text
-              , valueFrom =
+              , valueFrom = Some
                   kube.EnvVarSource::{
                   , fieldRef =
                       Some
@@ -34,7 +34,7 @@ let mkContainer =
               }
             , { name = "POD_NAMESPACE"
               , value = None Text
-              , valueFrom =
+              , valueFrom = Some
                   kube.EnvVarSource::{
                   , fieldRef =
                       Some
@@ -44,7 +44,7 @@ let mkContainer =
                   }
               }
             ]
-        , ports =
+        , ports = Some
             [ kube.ContainerPort::{
               , containerPort = 80
               , name = Some "http"
@@ -68,10 +68,10 @@ in    λ(input : ./Settings.dhall)
             kube.ConfigMap::{
             , metadata =
                 kube.ObjectMeta::{
-                , name = "haproxy-config"
+                , name = Some "haproxy-config"
                 , namespace = Some input.namespace
                 }
-            , data =
+            , data = Some
                 [ { mapKey = "backend-server-slots-increment", mapValue = "4" }
                 , { mapKey = "ssl-dh-default-max-size", mapValue = "2048" }
                 ]
@@ -81,10 +81,10 @@ in    λ(input : ./Settings.dhall)
             kube.ConfigMap::{
             , metadata =
                 kube.ObjectMeta::{
-                , name = "haproxy-tcp-config"
+                , name = Some "haproxy-tcp-config"
                 , namespace = Some input.namespace
                 }
-            , data = [ { mapKey = "636", mapValue = "ldap/openldap:636" } ]
+            , data = Some [ { mapKey = "636", mapValue = "ldap/openldap:636" } ]
             }
 
       let config =
@@ -94,8 +94,8 @@ in    λ(input : ./Settings.dhall)
             , servicePorts = Some ([] : List Natural)
             , containers =
                 [ mkContainer
-                    { configMapName = configMap.metadata.name
-                    , tcpConfigMapName = tcpConfigMap.metadata.name
+                    { configMapName = "haproxy-config"
+                    , tcpConfigMapName = "haproxy-tcp-config"
                     , namespace = input.namespace
                     }
                 ]
@@ -120,14 +120,14 @@ in    λ(input : ./Settings.dhall)
             , spec =
                 Some
                   kube.ServiceSpec::{
-                  , ports =
+                  , ports = Some
                       [ mkServicePort 80 "http"
                       , mkServicePort 443 "https"
                       , mkServicePort 1936 "stats"
                       , mkServicePort 636 "ldaps"
                       ]
-                  , selector = helpers.mkSelector config
-                  , externalIPs = config.externalIPs
+                  , selector = Some (helpers.mkSelector config)
+                  , externalIPs = Some config.externalIPs
                   }
             }
 

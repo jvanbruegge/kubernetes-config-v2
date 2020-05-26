@@ -155,10 +155,10 @@ in    λ(certs : Certs.Type)
             kube.ConfigMap::{
             , metadata =
                 kube.ObjectMeta::{
-                , name = agentConfigMapName
+                , name = Some agentConfigMapName
                 , namespace = Some input.namespace
                 }
-            , data =
+            , data = Some
                 [ { mapKey = configFile, mapValue = agentConfig certs input } ]
             }
 
@@ -166,8 +166,8 @@ in    λ(certs : Certs.Type)
             kube.Container::{
             , name = "vault-agent-${certs.volumeName}"
             , image = Some "registry.hub.docker.com/library/vault:1.3.0"
-            , args = [ "agent", "-config=${configPath}/${configFile}" ]
-            , volumeMounts =
+            , args = Some [ "agent", "-config=${configPath}/${configFile}" ]
+            , volumeMounts = Some
                 [ kube.VolumeMount::{
                   , mountPath = configPath
                   , name = agentConfigMapName
@@ -198,12 +198,12 @@ in    λ(certs : Certs.Type)
                     }
                   , kube.Volume::{
                     , name = tokenVolume
-                    , emptyDir =
+                    , emptyDir = Some
                         kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
                     }
                   , kube.Volume::{
                     , name = certs.volumeName
-                    , emptyDir =
+                    , emptyDir = Some
                         kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
                     }
                   ]

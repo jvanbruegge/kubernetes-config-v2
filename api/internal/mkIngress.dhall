@@ -81,7 +81,7 @@ in    λ(input : SimpleDeployment.Type)
                       kube.Ingress::{
                       , metadata =
                           kube.ObjectMeta::{
-                          , name = input.name
+                          , name = Some input.name
                           , annotations = Some
                               (certAnnotation # input.ingress.annotations)
                           , namespace = Some input.namespace
