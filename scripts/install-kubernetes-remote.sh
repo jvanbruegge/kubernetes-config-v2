@@ -46,8 +46,8 @@ sudo chown "$(id -u):$(id -g)" "$HOME/.kube/admin.conf"
 export KUBECONFIG=$HOME/.kube/admin.conf
 echo "export KUBECONFIG=$HOME/.kube/admin.conf" >> "$HOME/.bashrc"
 
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7faccdfe7b3c09097105e68030ea7/Documentation/kube-flannel.yml
-kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7faccdfe7b3c09097105e68030ea7/Documentation/k8s-manifests/kube-flannel-rbac.yml
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
 sudo mkdir -p /data

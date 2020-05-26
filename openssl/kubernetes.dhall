@@ -41,6 +41,26 @@ let kubernetesCA =
         , caDir = "ca/kubernetesCA"
         }
 
+let etcdCA =
+      openssl.mkCaConfig
+        openssl.CaConfig::{
+        , distinguishedName = openssl.DistinguishedName::{
+          , commonName = "etcd-ca"
+          }
+        , allowedHosts = [] : List Text
+        , caDir = "ca/kubernetesCA"
+        }
+
+let frontProxyCA =
+      openssl.mkCaConfig
+        openssl.CaConfig::{
+        , distinguishedName = openssl.DistinguishedName::{
+          , commonName = "kubernetes-front-proxy-ca"
+          }
+        , allowedHosts = [] : List Text
+        , caDir = "ca/frontProxyCA"
+        }
+
 let adminCert =
       mkKubernetesCert
         Cert::{ cn = "kubernetes-admin", o = Some "system:masters" }
@@ -68,4 +88,6 @@ in  { admin = adminCert
     , kubeScheduler = kubeSchedulerCert
     , serviceAccount = serviceAccountCert
     , kubernetesCA = kubernetesCA
+    , etcdCA = etcdCA
+    , frontProxyCA = frontProxyCA
     }

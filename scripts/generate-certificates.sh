@@ -51,13 +51,13 @@ function generateIntermediateCA() {
 
         echo -e "$caPass\ny\ny\n" | \
             openssl ca -config "$caDir/ca.conf" -cert "$caDir/ca.crt" -keyfile "$caDir/ca.key" \
-                -extensions x509_ext -out "$caDir/$name/ca.crt" -passin stdin -infiles "$caDir/$name/ca.csr"
+                -extensions x509_ext -out "$caDir/$name/ca.crt" -passin stdin -in "$caDir/$name/ca.csr" -notext
     fi
 }
 
 generateIntermediateCA "kubernetesCA"
-#generateIntermediateCA "etcdCA"
-#generateIntermediateCA "frontProxyCA"
+generateIntermediateCA "etcdCA"
+generateIntermediateCA "frontProxyCA"
 
 function generateCert() {
     name="$1"
@@ -97,8 +97,8 @@ function copyCert() {
 
 echo "Transfering certificates to server"
 copyCert "$caDir/kubernetesCA/ca" "ca"
-#copyCert "$caDir/etcdCA/ca" "etcd/ca"
-#copyCert "$caDir/frontProxyCA/ca" "front-proxy-ca"
+copyCert "$caDir/etcdCA/ca" "etcd/ca"
+copyCert "$caDir/frontProxyCA/ca" "front-proxy-ca"
 
 copyCert "$dir/admin" "admin"
 copyCert "$dir/kubelet" "kubelet"
