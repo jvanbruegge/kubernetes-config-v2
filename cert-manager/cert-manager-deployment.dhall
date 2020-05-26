@@ -1,4 +1,4 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
 let api = ../api.dhall
 

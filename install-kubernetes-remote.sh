@@ -23,22 +23,25 @@ echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/a
 sudo apt-get update
 sudo apt-get install -y kubeadm kubelet kubernetes-cni
 
-sudo tee /etc/docker/daemon.json >/dev/null <<EOF
-{
-    "exec-opts": ["native.cgroupdriver=systemd"],
-    "log-driver": "json-file",
-    "log-opts": {
-        "max-size": "100m"
-    },
-    "storage-driver": "overlay2"
-}
-EOF
-
 sudo systemctl restart docker
 
 # Set up kubernetes
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address="$SERVER_ADDRESS" \
-    --node-name kube-master
+sudo kubeadm init phase kubeconfig all
+
+declare -A credentials=( ["admin"]="default-admin" ["kubelet"]="default-auth" ["controller-manager"]="default-controller-manager" ["scheduler"]="default-scheduler" )
+
+cd /etc/kubernetes
+for name in admin kubelet controller-manager scheduler; do
+    KUBECONFIG="$name.conf" sudo kubectl config set-cluster default-cluster --server=https://127.0.0.1:6443 --certificate-authority /etc/kubernetes/pki/ca.crt --embed-certs
+    KUBECONFIG="$name.conf" sudo kubectl config set-credentials "${credentials["$name"]}" \
+        --client-key "/etc/kubernetes/pki/$name.key" --client-certificate "/etc/kubernetes/pki/$name.crt" --embed-certs
+    KUBECONFIG="$name.conf" sudo kubectl config set-context default-system --cluster default-cluster --user "${credentials["$name"]}"
+    KUBECONFIG="$name.conf" sudo kubectl config use-context default-system
+done
+cd
+
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address="$SERVER_ADDRESS" --kubernetes-version=v1.18.3 \
+    --node-name kube-master --skip-phases kubeconfig
 
 mkdir "$HOME/.kube"
 sudo cp /etc/kubernetes/admin.conf "$HOME/.kube/"
@@ -50,4 +53,4 @@ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7fa
 kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/960b3243b9a7faccdfe7b3c09097105e68030ea7/Documentation/k8s-manifests/kube-flannel-rbac.yml
 kubectl taint nodes --all node-role.kubernetes.io/master-
 
-kubectl wait --for=condition=ready --timeout=120s nodes/kube-master > /dev/null
+kubectl wait --for=condition=ready nodes/kube-master > /dev/null

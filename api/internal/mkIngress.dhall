@@ -1,6 +1,6 @@
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let helpers = ./helpers.dhall
 
@@ -55,13 +55,12 @@ in    λ(input : SimpleDeployment.Type)
       let tls =
                   if input.ingress.requestCertificate
 
-            then  [ kube.IngressTLS::{
-                    , hosts = hosts
+            then  Some [kube.IngressTLS::{
+                    , hosts = Some hosts
                     , secretName = Some "${input.name}-letsencrypt-cert"
-                    }
-                  ]
+                    }]
 
-            else  [] : List kube.IngressTLS.Type
+            else  None (List kube.IngressTLS.Type)
 
       let certAnnotation =
                   if input.ingress.requestCertificate
@@ -83,19 +82,19 @@ in    λ(input : SimpleDeployment.Type)
                       , metadata =
                           kube.ObjectMeta::{
                           , name = input.name
-                          , annotations =
-                              certAnnotation # input.ingress.annotations
+                          , annotations = Some
+                              (certAnnotation # input.ingress.annotations)
                           , namespace = Some input.namespace
                           }
                       , spec =
                           Some
                             kube.IngressSpec::{
-                            , rules =
-                                prelude.List.concatMap
+                            , rules = Some
+                                (prelude.List.concatMap
                                   kube.ContainerPort.Type
                                   kube.IngressRule.Type
                                   mkIngressRule
-                                  ports
+                                  ports)
                             , tls = tls
                             }
                       }

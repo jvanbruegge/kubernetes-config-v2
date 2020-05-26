@@ -1,6 +1,6 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
-let prelude = ../prelude.dhall
+let prelude = (../packages.dhall).prelude
 
 let Rule = kube.PolicyRule.Type
 

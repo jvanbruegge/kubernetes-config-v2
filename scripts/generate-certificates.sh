@@ -27,14 +27,37 @@ if [ ! -e "$caDir/ca.key" ]; then
 
     dhall text --file openssl/ca.conf.dhall > "$caDir/ca.conf"
 
-    echo "$caPass" | openssl genpkey -algorithm RSA -aes-256-cbc -pass stdin -out "$caDir/ca.key" -pkeyopt rsa_keygen_bits:4096
-
-    chmod 400 "$caDir/ca.key"
-
-    echo "$caPass" | openssl req -new -out "$caDir/ca.crt" -config "$caDir/ca.conf" -x509 -days 7300 -key "$caDir/ca.key" -passin stdin
+    echo "$caPass" | \
+        openssl req -new -nodes -newkey rsa:4096 -keyout "$caDir/ca.key" -out "$caDir/ca.crt" \
+            -config "$caDir/ca.conf" -x509 -days 7300 -passin stdin
 
     [ -e "$dir" ] && rm -r "$dir"
 fi
+
+function generateIntermediateCA() {
+    name="$1"
+    if [ ! -e "$caDir/$name/ca.key" ] || [ ! -e "$caDir/$name/ca.crt" ]; then
+        echo "Generating intermediate CA: $name"
+
+        mkdir -p "$caDir/$name"
+
+        touch "$caDir/$name/ca.index"
+        openssl rand -hex 16 > "$caDir/$name/ca.serial"
+
+        echo "(./openssl/kubernetes.dhall).$name" | dhall text > "$caDir/$name/ca.conf"
+
+        openssl req -new -nodes -newkey rsa:4096 -keyout "$caDir/$name/ca.key" -out "$caDir/$name/ca.csr" \
+            -config "$caDir/$name/ca.conf"
+
+        echo -e "$caPass\ny\ny\n" | \
+            openssl ca -config "$caDir/ca.conf" -cert "$caDir/ca.crt" -keyfile "$caDir/ca.key" \
+                -extensions x509_ext -out "$caDir/$name/ca.crt" -passin stdin -infiles "$caDir/$name/ca.csr"
+    fi
+}
+
+generateIntermediateCA "kubernetesCA"
+#generateIntermediateCA "etcdCA"
+#generateIntermediateCA "frontProxyCA"
 
 function generateCert() {
     name="$1"
@@ -47,7 +70,8 @@ function generateCert() {
             -out "$dir/$name.csr" -config "$dir/$name.conf"
 
         echo -e "$caPass\ny\ny\n" | \
-            openssl ca -config ca/ca.conf -cert ca/ca.crt -keyfile ca/ca.key -out "$dir/$name.crt" -passin stdin -infiles "$dir/$name.csr"
+            openssl ca -config "$caDir/ca.conf" -cert "$caDir/ca.crt" -keyfile "$caDir/ca.key" \
+                -out "$dir/$name.crt" -passin stdin -infiles "$dir/$name.csr"
 
         rm "$dir/$name.csr" "$dir/$name.conf"
     fi
@@ -58,16 +82,25 @@ mkdir -p "$dir"
 generateCert "admin"
 generateCert "kubelet"
 generateCert "kubeControllerManager"
-generateCert "kubeProxy"
 generateCert "kubeScheduler"
-generateCert "kubernetes"
-generateCert "serviceAccount"
 
-echo ""
+function copyCert() {
+    from=$1
+    to=$2
+    prefix=/etc/kubernetes/pki
+    if [ -n "$(dirname "$to")" ]; then
+        $SSH_COMMAND "sudo mkdir -p $prefix/$(dirname "$to")"
+    fi
+    $SSH_COMMAND "sudo tee $prefix/$to.crt >/dev/null" < "$from.crt"
+    $SSH_COMMAND "sudo tee $prefix/$to.key >/dev/null" < "$from.key"
+}
+
 echo "Transfering certificates to server"
-cd generated
-for f in *.key; do
-    cert="$(basename -s .key "$f").crt"
-    $SSH_COMMAND "cat > $cert" < "$cert"
-    $SSH_COMMAND "cat > $f" < "$f"
-done
+copyCert "$caDir/kubernetesCA/ca" "ca"
+#copyCert "$caDir/etcdCA/ca" "etcd/ca"
+#copyCert "$caDir/frontProxyCA/ca" "front-proxy-ca"
+
+copyCert "$dir/admin" "admin"
+copyCert "$dir/kubelet" "kubelet"
+copyCert "$dir/kubeControllerManager" "controller-manager"
+copyCert "$dir/kubeScheduler" "scheduler"

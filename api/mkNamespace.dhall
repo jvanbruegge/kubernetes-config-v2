@@ -1,4 +1,4 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
 in    λ(name : Text)
     → [ kube.Resource.Namespace

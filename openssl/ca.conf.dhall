@@ -14,6 +14,6 @@ in  openssl.mkCaConfig
         , state = Some settings.stateOrProvinceName
         , streetAddress = Some settings.streetAddress
         }
-      , allowedHosts = [ "cerberus-systems.de", "cerberus-systems.com" ]
+      , allowedHosts = [] : List Text
       , caDir = "ca"
       }

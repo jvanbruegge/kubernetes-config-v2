@@ -31,53 +31,41 @@ let mkKubernetesCert =
             ]
           }
 
+let kubernetesCA =
+      openssl.mkCaConfig
+        openssl.CaConfig::{
+        , distinguishedName = openssl.DistinguishedName::{
+          , commonName = "kubernetes-ca"
+          }
+        , allowedHosts = [] : List Text
+        , caDir = "ca/kubernetesCA"
+        }
+
 let adminCert =
-      mkKubernetesCert Cert::{ cn = "admin", o = Some "system:masters" }
+      mkKubernetesCert
+        Cert::{ cn = "kubernetes-admin", o = Some "system:masters" }
 
 let kubletCert =
       mkKubernetesCert
         Cert::{
-        , cn = "system:node:master"
+        , cn = "system:node:kube-master"
         , o = Some "system:nodes"
         , altIPs = settings.serverIPs
         }
 
 let kubeControllerManagerCert =
-      mkKubernetesCert
-        Cert::{
-        , cn = "system:kube-controller-manager"
-        , o = Some "system:kube-controller-manager"
-        }
-
-let kubeProxyCert =
-      mkKubernetesCert
-        Cert::{ cn = "system:kube-proxy", o = Some "system:node-proxier" }
+      mkKubernetesCert Cert::{ cn = "system:kube-controller-manager" }
 
 let kubeSchedulerCert =
       mkKubernetesCert
         Cert::{ cn = "system:kube-scheduler", o = Some "system:kube-scheduler" }
-
-let kubernetesCert =
-      mkKubernetesCert
-        Cert::{
-        , cn = "kubernetes"
-        , altIPs = [ "10.244.0.1" ] # settings.serverIPs # [ "127.0.0.1" ]
-        , altNames =
-          [ "kubernetes"
-          , "kubernetes.default"
-          , "kubernetes.default.svc"
-          , "kubernetes.default.svc.cluster"
-          , "kubernetes.default.svc.cluster.local"
-          ]
-        }
 
 let serviceAccountCert = mkKubernetesCert Cert::{ cn = "service-accounts" }
 
 in  { admin = adminCert
     , kubelet = kubletCert
     , kubeControllerManager = kubeControllerManagerCert
-    , kubeProxy = kubeProxyCert
     , kubeScheduler = kubeSchedulerCert
-    , kubernetes = kubernetesCert
     , serviceAccount = serviceAccountCert
+    , kubernetesCA = kubernetesCA
     }

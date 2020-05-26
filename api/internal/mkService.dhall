@@ -1,8 +1,8 @@
 let SimpleDeployment = ../SimpleDeployment.dhall
 
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let helpers = ./helpers.dhall
 

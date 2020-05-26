@@ -1,4 +1,4 @@
-let prelude = ../prelude.dhall
+let prelude = (../packages.dhall).prelude
 
 in    λ ( i
         : { path : Text

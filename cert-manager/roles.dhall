@@ -1,6 +1,6 @@
 let api = ../api.dhall
 
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
 let secrets =
       kube.PolicyRule::{
