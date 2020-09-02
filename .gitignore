@@ -4,3 +4,4 @@ ca/
 
 vault_keys.txt
 *.log
+*.env
