@@ -2,11 +2,6 @@
 
 set -euo pipefail
 
-if [ -e ".env" ]; then
-    # shellcheck source=.env
-    source .env
-fi
-
 if [ -z "$SERVER_USER" ]; then
     echo "You must define SERVER_USER e.g. with export SERVER_USER=vagrant" >&2
     exit 1

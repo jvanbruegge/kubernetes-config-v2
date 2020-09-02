@@ -1,35 +1,8 @@
 let openssl = (../packages.dhall).openssl
 
+let utils = ../utils.dhall
+
 let settings = ../settings.dhall
-
-let Cert =
-      { Type =
-          { cn : Text
-          , o : Optional Text
-          , altNames : List Text
-          , altIPs : List Text
-          }
-      , default =
-          { o = None Text, altNames = [] : List Text, altIPs = [] : List Text }
-      }
-
-let mkKubernetesCert =
-        λ(args : Cert.Type)
-      → openssl.mkConfig
-          openssl.Config::{
-          , distinguishedName = openssl.DistinguishedName::{
-            , commonName = args.cn
-            , organization = args.o
-            }
-          , altNames = args.altNames
-          , altIPs = args.altIPs
-          , usage =
-            [ openssl.KeyUsage.DigitalSignature
-            , openssl.KeyUsage.KeyEncipherment
-            , openssl.KeyUsage.ServerAuth
-            , openssl.KeyUsage.ClientAuth
-            ]
-          }
 
 let kubernetesCA =
       openssl.mkCaConfig
@@ -61,33 +34,37 @@ let frontProxyCA =
         , caDir = "ca/frontProxyCA"
         }
 
-let adminCert =
-      mkKubernetesCert
-        Cert::{ cn = "kubernetes-admin", o = Some "system:masters" }
+let mkCert =
+        λ(subdomain : Text)
+      → λ(server : Bool)
+      → let newHosts =
+              utils.NonEmpty.map
+                Text
+                Text
+                (λ(host : Text) → "${subdomain}.${host}")
+                settings.hosts
 
-let kubletCert =
-      mkKubernetesCert
-        Cert::{
-        , cn = "system:node:kube-master"
-        , o = Some "system:nodes"
-        , altIPs = settings.serverIPs
-        }
+        in  openssl.mkConfig
+              openssl.Config::{
+              , distinguishedName = openssl.DistinguishedName::{
+                , commonName = newHosts.head
+                }
+              , altNames = utils.NonEmpty.toList Text newHosts
+              , usage =
+                    openssl.Config.default.usage
+                  # [       if server
 
-let kubeControllerManagerCert =
-      mkKubernetesCert Cert::{ cn = "system:kube-controller-manager" }
+                      then  openssl.KeyUsage.ServerAuth
 
-let kubeSchedulerCert =
-      mkKubernetesCert
-        Cert::{ cn = "system:kube-scheduler", o = Some "system:kube-scheduler" }
+                      else  openssl.KeyUsage.ClientAuth
+                    ]
+              }
 
-let serviceAccountCert = mkKubernetesCert Cert::{ cn = "service-accounts" }
-
-in  { admin = adminCert
-    , kubelet = kubletCert
-    , kubeControllerManager = kubeControllerManagerCert
-    , kubeScheduler = kubeSchedulerCert
-    , serviceAccount = serviceAccountCert
-    , kubernetesCA = kubernetesCA
+in  { kubernetesCA = kubernetesCA
     , etcdCA = etcdCA
     , frontProxyCA = frontProxyCA
+    , kubeApiserver = kubeApiserverCert
+    , kubeApiserverKubeletClient = kubeApiserverKubeletClientCert
+    , vault = mkCert "vault" True
+    , vault-operator = mkCert "vault-operator" False
     }

@@ -16,8 +16,8 @@ let vaultContainer =
       kube.Container::{
       , name = "vault"
       , image = Some "registry.hub.docker.com/library/vault:1.3.0"
-      , command = [ "sh" ]
-      , args =
+      , command = Some [ "sh" ]
+      , args = Some
           [ "-c"
           , ''
             mkdir -p ${dataPath}/config \
@@ -25,7 +25,7 @@ let vaultContainer =
               && docker-entrypoint.sh server
             ''
           ]
-      , env =
+      , env = Some
           [ { name = "VAULT_LOCAL_CONFIG"
             , value =
                 Some
@@ -37,16 +37,16 @@ let vaultContainer =
                       , certName = None Text
                       }
                   )
-            , valueFrom = kube.EnvVarSource.default
+            , valueFrom = None kube.EnvVarSource.Type
             }
           ]
       , securityContext =
           Some
             kube.SecurityContext::{
             , capabilities =
-                Some { drop = [] : List Text, add = [ "IPC_LOCK" ] }
+                Some { drop = None (List Text), add = Some [ "IPC_LOCK" ] }
             }
-      , ports =
+      , ports = Some
           [ kube.ContainerPort::{
             , containerPort = vaultPort
             , name = Some "vault-port"
@@ -58,7 +58,7 @@ let vaultContainer =
             , protocol = Some "TCP"
             }
           ]
-      , volumeMounts =
+      , volumeMounts = Some
           [ kube.VolumeMount::{ mountPath = dataPath, name = volumeName } ]
       }
 

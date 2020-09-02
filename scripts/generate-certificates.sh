@@ -79,15 +79,13 @@ function generateCert() {
 
 mkdir -p "$dir"
 
-generateCert "admin"
-generateCert "kubelet"
-generateCert "kubeControllerManager"
-generateCert "kubeScheduler"
+generateCert "vault"
+generateCert "vault-operator"
 
 function copyCert() {
     from=$1
     to=$2
-    prefix=/etc/kubernetes/pki
+    prefix=${3:-/etc/kubernetes/pki}
     if [ -n "$(dirname "$to")" ]; then
         $SSH_COMMAND "sudo mkdir -p $prefix/$(dirname "$to")"
     fi
@@ -96,11 +94,8 @@ function copyCert() {
 }
 
 echo "Transfering certificates to server"
-copyCert "$caDir/kubernetesCA/ca" "ca"
+copyCert "$caDir/kubernetesCA/ca" "ca" "/etc/kubernetes/pki"
 copyCert "$caDir/etcdCA/ca" "etcd/ca"
 copyCert "$caDir/frontProxyCA/ca" "front-proxy-ca"
 
-copyCert "$dir/admin" "admin"
-copyCert "$dir/kubelet" "kubelet"
-copyCert "$dir/kubeControllerManager" "controller-manager"
-copyCert "$dir/kubeScheduler" "scheduler"
+copyCert "$dir/vault" "vault" "/data/vault/ssl"
