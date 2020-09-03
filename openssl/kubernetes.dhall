@@ -63,8 +63,6 @@ let mkCert =
 in  { kubernetesCA = kubernetesCA
     , etcdCA = etcdCA
     , frontProxyCA = frontProxyCA
-    , kubeApiserver = kubeApiserverCert
-    , kubeApiserverKubeletClient = kubeApiserverKubeletClientCert
     , vault = mkCert "vault" True
     , vault-operator = mkCert "vault-operator" False
     }

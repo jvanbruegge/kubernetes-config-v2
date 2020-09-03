@@ -5,7 +5,8 @@ let kube = (../packages.dhall).kubernetes
 let clusterRules =
       [ kube.PolicyRule::{
         , verbs = [ "list", "watch" ]
-        , resources = Some [ "configmaps", "endpoints", "nodes", "pods", "secrets" ]
+        , resources = Some
+          [ "configmaps", "endpoints", "nodes", "pods", "secrets" ]
         , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
@@ -48,12 +49,12 @@ let rules =
         }
       ]
 
-in    λ(input : ./Settings.dhall)
-    → api.mkRoles
+in  λ(input : ./Settings.dhall) →
+      api.mkRoles
         api.Roles::{
         , name = input.serviceAccount
-        , clusterRules = clusterRules
-        , rules = rules
+        , clusterRules
+        , rules
         , namespace = input.namespace
         , serviceAccount = input.serviceAccount
         }

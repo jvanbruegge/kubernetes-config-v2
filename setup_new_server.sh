@@ -21,6 +21,20 @@ if ! $SSH_COMMAND "echo 'SSH connection to server succeeded'"; then
 fi
 $SSH_COMMAND 'mkdir -p checkpoints'
 
+caDir=./ca
+dir=./generated
+
+# Get CA password
+read -sr -p "Enter pass phrase for ca.key: " caPass
+echo ""
+read -sr -p "Verifying - Enter pass phrase for ca.key: " caPassCopy
+echo ""
+
+if [[ "$caPass" != "$caPassCopy" ]]; then
+    echo -e "Error: Passwords not matching" > /dev/stderr
+    exit 1
+fi
+
 function runStep() {
     stepName=${1//-/ }
     red="\033[0;31m"
@@ -30,7 +44,7 @@ function runStep() {
 
     if ! $SSH_COMMAND stat "checkpoints/$1" >/dev/null 2>&1; then
         echo -e "${green}Running step '$stepName'${nc}"
-        if ! ./scripts/"$1.sh"; then
+        if ! ./scripts/"$1.sh" "$caDir" "$dir" "$caPass"; then
             echo -e "${red}Step '$stepName' failed${nc}"
             exit 1
         fi
@@ -45,3 +59,5 @@ function runStep() {
 runStep generate-certificates
 
 runStep install-kubernetes
+
+runStep initialize-vault

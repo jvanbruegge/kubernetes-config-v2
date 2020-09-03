@@ -2,19 +2,9 @@
 
 set -euo pipefail
 
-caDir=./ca
-dir=./generated
-
-# Get CA password
-read -sr -p "Enter pass phrase for ca.key: " caPass
-echo ""
-read -sr -p "Verifying - Enter pass phrase for ca.key: " caPassCopy
-echo ""
-
-if [[ "$caPass" != "$caPassCopy" ]]; then
-    echo -e "Error: Passwords not matching" > /dev/stderr
-    exit 1
-fi
+caDir=$1
+dir=$2
+caPass=$3
 
 # Generate CA
 if [ ! -e "$caDir/ca.key" ]; then
@@ -70,7 +60,7 @@ function generateCert() {
             -out "$dir/$name.csr" -config "$dir/$name.conf"
 
         echo -e "$caPass\ny\ny\n" | \
-            openssl ca -config "$caDir/ca.conf" -cert "$caDir/ca.crt" -keyfile "$caDir/ca.key" \
+            openssl ca -notext -config "$caDir/ca.conf" -cert "$caDir/ca.crt" -keyfile "$caDir/ca.key" \
                 -out "$dir/$name.crt" -passin stdin -infiles "$dir/$name.csr"
 
         rm "$dir/$name.csr" "$dir/$name.conf"
