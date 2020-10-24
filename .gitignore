@@ -2,6 +2,7 @@ generated/
 ca/
 .vagrant/
 
+ca-chain.crt
 vault_keys.txt
 *.log
 *.env

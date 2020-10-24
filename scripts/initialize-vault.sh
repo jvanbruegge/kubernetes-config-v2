@@ -19,6 +19,8 @@ export VAULT_CACERT="$caDir/ca.crt"
 export VAULT_CLIENT_CERT="$dir/vault-operator.crt"
 export VAULT_CLIENT_KEY="$dir/vault-operator.key"
 
+sleep 5
+
 initResponse=$(curl --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" --key "$VAULT_CLIENT_KEY" \
     -XPUT --data '{ "secret_shares": 5, "secret_threshold": 3 }' "$VAULT_ADDR/v1/sys/init" 2> /dev/null)
 
@@ -35,24 +37,28 @@ echo "Initialized vault - find keys in vault_keys.txt"
 
 function curlCmd {
     curl --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" \
-        --key "$VAULT_CLIENT_KEY" --header "X-Vault-Token: $rootToken" "$@"
+        --key "$VAULT_CLIENT_KEY" --header "X-Vault-Token: $rootToken" "$@" 2>/dev/null
 }
 
-for i in 1 2 3; do
-    key=$(echo "$vaultKeys" | sed -n "${i}p")
+function unsealVault {
+    for i in 1 2 3; do
+        key=$(echo "$vaultKeys" | sed -n "${i}p")
 
-    echo "{ \"key\": \"$key\" }" | \
-        curlCmd -XPUT --data @- "$VAULT_ADDR/v1/sys/unseal" >/dev/null 2>&1
-done
+        echo "{ \"key\": \"$key\" }" | \
+            curlCmd -XPUT --data @- "$VAULT_ADDR/v1/sys/unseal" >/dev/null
+    done
+}
+
+unsealVault
 
 for name in pki_int_outside pki_int_inside; do
     echo "Generating and signing $name"
 
     curlCmd -XPOST --data '{ "type": "pki", "max_lease_ttl": "720h" }' \
-        "$VAULT_ADDR/v1/sys/mounts/$name" >/dev/null 2>&1
+        "$VAULT_ADDR/v1/sys/mounts/$name" >/dev/null
 
     curlCmd -XPOST --data "{ \"common_name\": \"Cerberus Systems Intermediate CA ($name)\", \"key_bits\": 4096, \"organization\": \"Cerberus Systems\" }" \
-        "$VAULT_ADDR/v1/$name/intermediate/generate/internal" 2>/dev/null \
+        "$VAULT_ADDR/v1/$name/intermediate/generate/internal" \
         | jq -r '.data .csr' > "$dir/$name.csr"
 
     echo -e "$caPass\ny\ny\n" | \
@@ -63,6 +69,34 @@ for name in pki_int_outside pki_int_inside; do
 
     curlCmd -XPOST --data "{ \"certificate\": \"$(sed -z 's/\n/\\n/g' < "$dir/$name-chain.crt")\" }" \
         "$VAULT_ADDR/v1/$name/intermediate/set-signed"
+
+    curlCmd -XPOST --data '{ "allowed_domains": ["cerberus-systems.de", "cerberus-systems.com", "svc.cluster.local"], "allow_subdomains": true, "max_ttl": "1860h" }' \
+        "$VAULT_ADDR/v1/$name/roles/get-cert"
 done
 
-exit 1
+# Let vault generate a certificate for itself
+for name in vault vault-operator; do
+    echo "Generating certificate for $name"
+    result=$(curlCmd -XPOST --data "{ \"common_name\": \"$name.cerberus-systems.de\", \"alt_names\": \"$name.cerberus-systems.com,$name.$name.svc.cluster.local\" }" \
+        "$VAULT_ADDR/v1/pki_int_outside/issue/get-cert")
+
+    echo "$result" | jq -r '.data.certificate' > "$dir/$name.crt"
+    echo "$result" | jq -r '.data.private_key' > "$dir/$name.key"
+done
+
+echo "Copy vault cert to server"
+$SSH_COMMAND "sudo tee /data/vault/ssl/vault.crt >/dev/null" < "$dir/vault.crt"
+$SSH_COMMAND "sudo tee /data/vault/ssl/vault.key >/dev/null" < "$dir/vault.key"
+
+cp "$dir/pki_int_outside-chain.crt" ca-chain.crt
+
+echo "Restarting vault"
+./applyDir.sh vault delete
+./applyDir.sh vault
+
+export VAULT_CACERT="ca-chain.crt"
+sleep 5
+
+kubectl wait --namespace=vault --for=condition=ready --timeout=3000s pods vault-0
+
+unsealVault
