@@ -10,6 +10,8 @@ let utils = ../utils.dhall
 
 let tokenPath = "/home/vault"
 
+let caPath = "/home/ca"
+
 let tokenVolume = "vault-token"
 
 let certPath = "/var/certs"
@@ -18,12 +20,14 @@ let configPath = "/etc/vault"
 
 let configFile = "agent.hcl"
 
+let caVolume = "vault-agent-ca-volume"
+
 let globalSettings = ../settings.dhall
 
 let agentConfig =
-        λ(certs : Certs.Type)
-      → λ(input : SimpleDeployment.Type)
-      → let subdomain =
+      λ(certs : Certs.Type) →
+      λ(input : SimpleDeployment.Type) →
+        let subdomain =
               prelude.Optional.default Text input.namespace certs.subdomain
 
         let hosts =
@@ -52,17 +56,15 @@ let agentConfig =
                 )
 
         let mkContent =
-                λ(list : Bool)
-              → λ(entry : Text)
-              → let data =
-                            if list
-
+              λ(list : Bool) →
+              λ(entry : Text) →
+                let data =
+                      if    list
                       then  ''
                             {{ range .Data.${entry} }}
                             {{ . }}
                             {{ end }}
                             ''
-
                       else  "{{ .Data.${entry} }}"
 
                 in  ''
@@ -72,10 +74,10 @@ let agentConfig =
                     ''
 
         let mkTemplate =
-                λ(field : Text)
-              → λ(list : Bool)
-              → λ(path : Text)
-              → ''
+              λ(field : Text) →
+              λ(list : Bool) →
+              λ(path : Text) →
+                ''
                 template {
                     destination = "${path}"
                     error_on_missing_key = true
@@ -86,17 +88,17 @@ let agentConfig =
                 ''
 
         let mkFieldTemplate =
-                λ(field : Text)
-              → λ(isList : Bool)
-              → λ(cert : Bool)
-              → λ(list : List Certs.File.Type)
-              → prelude.Text.concatSep
+              λ(field : Text) →
+              λ(isList : Bool) →
+              λ(cert : Bool) →
+              λ(list : List Certs.File.Type) →
+                prelude.Text.concatSep
                   "\n"
                   ( prelude.List.map
                       Certs.File.Type
                       Text
-                      (   λ(x : Certs.File.Type)
-                        → let subdir =
+                      ( λ(x : Certs.File.Type) →
+                          let subdir =
                                 prelude.Optional.default
                                   Text
                                   ""
@@ -137,7 +139,7 @@ let agentConfig =
 
             vault {
                 address = "https://vault.vault.svc.cluster.local:8300"
-                tls_skip_verify = true
+                ca_cert = "${caPath}/ca-chain.crt"
             }
 
             ${mkFieldTemplate "ca_chain" True True certs.caCerts}
@@ -147,19 +149,18 @@ let agentConfig =
             ${mkFieldTemplate "private_key" False False certs.certs}
             ''
 
-in    λ(certs : Certs.Type)
-    → λ(input : SimpleDeployment.Type)
-    → let agentConfigMapName = "vault-agent-${certs.volumeName}-config"
+in  λ(certs : Certs.Type) →
+    λ(input : SimpleDeployment.Type) →
+      let agentConfigMapName = "vault-agent-${certs.volumeName}-config"
 
       let configMap =
             kube.ConfigMap::{
-            , metadata =
-                kube.ObjectMeta::{
-                , name = Some agentConfigMapName
-                , namespace = Some input.namespace
-                }
+            , metadata = kube.ObjectMeta::{
+              , name = Some agentConfigMapName
+              , namespace = Some input.namespace
+              }
             , data = Some
-                [ { mapKey = configFile, mapValue = agentConfig certs input } ]
+              [ { mapKey = configFile, mapValue = agentConfig certs input } ]
             }
 
       let vaultAgent =
@@ -168,19 +169,17 @@ in    λ(certs : Certs.Type)
             , image = Some "registry.hub.docker.com/library/vault:1.3.0"
             , args = Some [ "agent", "-config=${configPath}/${configFile}" ]
             , volumeMounts = Some
-                [ kube.VolumeMount::{
-                  , mountPath = configPath
-                  , name = agentConfigMapName
-                  }
-                , kube.VolumeMount::{
-                  , mountPath = tokenPath
-                  , name = tokenVolume
-                  }
-                , kube.VolumeMount::{
-                  , mountPath = certPath
-                  , name = certs.volumeName
-                  }
-                ]
+              [ kube.VolumeMount::{
+                , mountPath = configPath
+                , name = agentConfigMapName
+                }
+              , kube.VolumeMount::{ mountPath = tokenPath, name = tokenVolume }
+              , kube.VolumeMount::{
+                , mountPath = certPath
+                , name = certs.volumeName
+                }
+              , kube.VolumeMount::{ mountPath = caPath, name = caVolume }
+              ]
             }
 
       in    input
@@ -190,21 +189,27 @@ in    λ(certs : Certs.Type)
             , volumes =
                   [ kube.Volume::{
                     , name = agentConfigMapName
-                    , configMap =
-                        Some
-                          kube.ConfigMapVolumeSource::{
-                          , name = Some agentConfigMapName
-                          }
+                    , configMap = Some kube.ConfigMapVolumeSource::{
+                      , name = Some agentConfigMapName
+                      }
                     }
                   , kube.Volume::{
                     , name = tokenVolume
-                    , emptyDir = Some
-                        kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
+                    , emptyDir = Some kube.EmptyDirVolumeSource::{
+                      , medium = Some "Memory"
+                      }
                     }
                   , kube.Volume::{
                     , name = certs.volumeName
-                    , emptyDir = Some
-                        kube.EmptyDirVolumeSource::{ medium = Some "Memory" }
+                    , emptyDir = Some kube.EmptyDirVolumeSource::{
+                      , medium = Some "Memory"
+                      }
+                    }
+                  , kube.Volume::{
+                    , name = caVolume
+                    , configMap = Some kube.ConfigMapVolumeSource::{
+                      , name = Some "ca-chain"
+                      }
                     }
                   ]
                 # input.volumes

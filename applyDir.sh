@@ -15,6 +15,10 @@ if [ -n "$2" ]; then
 fi
 
 if [ ! -e "$dir/apply.sh" ]; then
+    if [ -z "$SERVER_USER" ]; then
+        echo "Please set SERVER_USER and SERVER_ADDRESS"
+        exit 1
+    fi
     ssh "$SERVER_USER@$SERVER_ADDRESS" "mkdir -p /data/$dir"
 
     dhall-to-yaml --documents --file "$dir/$dir.dhall" | \

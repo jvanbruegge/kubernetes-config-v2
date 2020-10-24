@@ -14,7 +14,7 @@ let ldapContainer =
       kube.Container::{
       , name = "openldap"
       , image = Some "registry.hub.docker.com/osixia/openldap:1.3.0"
-      , env =
+      , env = Some
           [ kube.EnvVar::{
             , name = "LDAP_ORGANISATION"
             , value = Some globalSettings.organizationName
@@ -26,9 +26,9 @@ let ldapContainer =
           , kube.EnvVar::{ name = "KEEP_EXISTING_CONFIG", value = Some "true" }
           , kube.EnvVar::{ name = "LDAP_TLS_ENFORCE", value = Some "true" }
           ]
-      , ports =
+      , ports = Some
           [ kube.ContainerPort::{ containerPort = 636, name = Some "ldaps" } ]
-      , volumeMounts =
+      , volumeMounts = Some
           [ kube.VolumeMount::{
             , mountPath = "/var/lib/ldap"
             , name = volumeName
