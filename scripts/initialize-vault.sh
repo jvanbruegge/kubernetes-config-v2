@@ -100,3 +100,23 @@ sleep 5
 kubectl wait --namespace=vault --for=condition=ready --timeout=3000s pods vault-0
 
 unsealVault
+
+echo "Creating get-cert vault policy"
+policy=$(dhall text --file vault/policies/get-cert.hcl.dhall | sed -z 's/\n/\\n/g' | sed 's/"/\\"/g')
+curlCmd -XPUT --data "{ \"policy\": \"$policy\" }" "$VAULT_ADDR/v1/sys/policy/get-cert"
+
+echo "Setting up kubernetes authentication"
+
+curlCmd -XPOST --data '{ "type": "kubernetes" }' "$VAULT_ADDR/v1/sys/auth/kubernetes"
+curlCmd -XPOST --data '{ "kubernetes_host": "https://kubernetes.default.svc" }'  "$VAULT_ADDR/v1/auth/kubernetes/config"
+curlCmd -XPOST --data '{ "bound_service_account_names": ["default"], "bound_service_account_namespaces": ["*"], "token_ttl": "2h", "token_policies": ["get-cert"] }' "$VAULT_ADDR/v1/auth/kubernetes/role/get-cert"
+
+echo "Enabling key-value backend"
+
+curlCmd -XPOST --data '{ "type": "kv", "version": "2" }' "$VAULT_ADDR/v1/sys/mounts/kv"
+
+echo "Saving ldap admin passwords in vault"
+adminPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
+configPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
+
+curlCmd -XPOST --data "{ \"data\": { \"admin\": \"$adminPass\", \"config-admin\": \"$configPass\" } }" "$VAULT_ADDR/v1/kv/data/ldap"
