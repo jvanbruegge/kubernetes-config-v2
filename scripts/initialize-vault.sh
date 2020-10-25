@@ -119,4 +119,7 @@ echo "Saving ldap admin passwords in vault"
 adminPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
 configPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
 
-curlCmd -XPOST --data "{ \"data\": { \"admin\": \"$adminPass\", \"config-admin\": \"$configPass\" } }" "$VAULT_ADDR/v1/kv/data/ldap"
+echo "$adminPass" > ldap_keys.txt
+echo "$configPass" >> ldap_keys.txt
+
+curlCmd -XPOST --data "{ \"admin\": \"$adminPass\", \"config-admin\": \"$configPass\" }" "$VAULT_ADDR/v1/kv/ldap"

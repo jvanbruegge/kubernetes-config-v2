@@ -16,10 +16,12 @@ let host = utils.NonEmpty.head Text globalSettings.hosts
 let adminContainer =
       kube.Container::{
       , name = "phpldapadmin"
-      , image = Some "registry.hub.docker.com/osixia/phpldapadmin:0.9.0"
-      , env =
+      , image = Some "registry.hub.docker.com/cerberussystems/phpldapadmin:0.9.2"
+      , env = Some
           [ kube.EnvVar::{ name = "PHPLDAPADMIN_SERVER_PATH", value = Some "/" }
           , kube.EnvVar::{ name = "PHPLDAPADMIN_HTTPS", value = Some "true" }
+          , kube.EnvVar::{ name = "PHPLDAPADMIN_HTTPS_VERIFY_CLIENT", value = Some "require" }
+          , kube.EnvVar::{ name = "PHPLDAPADMIN_HTTPS_VERIFY_DEPTH", value = Some "2" }
           , kube.EnvVar::{
             , name = "PHPLDAPADMIN_LDAP_HOSTS"
             , value = Some phpldapadmin_config
@@ -29,9 +31,9 @@ let adminContainer =
             , value = Some "phpldapadmin.${host}"
             }
           ]
-      , ports =
+      , ports = Some
           [ kube.ContainerPort::{ containerPort = 443, name = Some "https" } ]
-      , volumeMounts =
+      , volumeMounts = Some
           [ kube.VolumeMount::{
             , mountPath = "/container/service/ldap-client/assets/certs"
             , name = certVolume
