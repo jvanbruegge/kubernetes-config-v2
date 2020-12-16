@@ -114,12 +114,3 @@ curlCmd -XPOST --data '{ "bound_service_account_names": ["default"], "bound_serv
 echo "Enabling key-value backend"
 
 curlCmd -XPOST --data '{ "type": "kv", "version": "2" }' "$VAULT_ADDR/v1/sys/mounts/kv"
-
-echo "Saving ldap admin passwords in vault"
-adminPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
-configPass=$(tr -dc _A-Za-z-0-9 < /dev/urandom | head -c"${1:-32}")
-
-echo "$adminPass" > ldap_keys.txt
-echo "$configPass" >> ldap_keys.txt
-
-curlCmd -XPOST --data "{ \"admin\": \"$adminPass\", \"config-admin\": \"$configPass\" }" "$VAULT_ADDR/v1/kv/ldap"

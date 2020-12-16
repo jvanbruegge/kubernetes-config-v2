@@ -63,6 +63,7 @@ let vaultContainer =
       , volumeMounts = Some
         [ kube.VolumeMount::{ mountPath = dataPath, name = volumeName }
         , kube.VolumeMount::{ mountPath = caPath, name = certName }
+        , kube.VolumeMount::{ mountPath = "/ca", name = "ca-chain" }
         ]
       }
 
@@ -87,6 +88,12 @@ in  λ(input : ./Settings.dhall) →
                 , name = certName
                 , secret = Some kube.SecretVolumeSource::{
                   , secretName = Some input.certSecret
+                  }
+                }
+              , kube.Volume::{
+                , name = "ca-chain"
+                , configMap = Some kube.ConfigMapVolumeSource::{
+                  , name = Some "ca-chain"
                   }
                 }
               ]

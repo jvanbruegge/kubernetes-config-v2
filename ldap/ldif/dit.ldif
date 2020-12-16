@@ -12,9 +12,3 @@ dn: ou=services,dc=cerberus-systems,dc=de
 objectClass: organizationalUnit
 description: All services that have access to parts of the directory
 ou: services
-
-
-dn: displayName=bitwarden,ou=groups,dc=cerberus-systems,dc=de
-objectClass: cerberusGroup
-description: All users with access to bitwarden
-displayName: bitwarden

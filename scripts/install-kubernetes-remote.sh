@@ -2,21 +2,43 @@
 
 set -euo pipefail
 
-# Set up network config
-echo "net.bridge.bridge-nf-call-iptables=1" | sudo tee /etc/sysctl.d/99-kubernetes.conf > /dev/null
+# Set up containerd
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# Set up required sysctl parameters
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+# Apply sysctl params without reboot
+sudo sysctl --system
 
 echo "kube-master" | sudo tee /etc/hostname > /dev/null
 
 sudo apt-get update
-sudo apt-get install -y software-properties-common
+sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 
-# Install docker
-if ! docker -v >/dev/null; then
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-    sudo apt-get install -y docker-ce
-    sudo usermod -aG docker "$SERVER_USER"
-fi
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
+
+## Add Docker apt repository.
+sudo add-apt-repository \
+    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) \
+    stable"
+sudo apt-get update && sudo apt-get install -y containerd.io
+
+# Configure containerd
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+sudo systemctl restart containerd
 
 # Disable swap
 sudo swapoff -a
@@ -29,19 +51,6 @@ if ! kubectl version; then
     echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
     sudo apt-get update
     sudo apt-get install -y kubeadm kubelet kubernetes-cni
-
-    sudo tee /etc/docker/daemon.json >/dev/null <<EOF
-{
-    "exec-opts": ["native.cgroupdriver=systemd"],
-    "log-driver": "json-file",
-    "log-opts": {
-        "max-size": "100m"
-    },
-    "storage-driver": "overlay2"
-}
-EOF
-
-    sudo systemctl restart docker
 fi
 
 # Set up kubernetes
