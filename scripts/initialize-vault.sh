@@ -21,8 +21,8 @@ export VAULT_CLIENT_KEY="$dir/vault-operator.key"
 
 sleep 5
 
-initResponse=$(curl --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" --key "$VAULT_CLIENT_KEY" \
-    -XPUT --data '{ "secret_shares": 5, "secret_threshold": 3 }' "$VAULT_ADDR/v1/sys/init" 2> /dev/null)
+initResponse=$(curl -s --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" --key "$VAULT_CLIENT_KEY" \
+    -XPUT --data '{ "secret_shares": 5, "secret_threshold": 3 }' "$VAULT_ADDR/v1/sys/init")
 
 vaultKeys=$(echo "$initResponse" | jq -r '.keys | .[]')
 rootToken=$(echo "$initResponse" | jq -r .root_token)
@@ -36,8 +36,8 @@ $rootToken" > vault_keys.txt
 echo "Initialized vault - find keys in vault_keys.txt"
 
 function curlCmd {
-    curl --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" \
-        --key "$VAULT_CLIENT_KEY" --header "X-Vault-Token: $rootToken" "$@" 2>/dev/null
+    curl -s --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" \
+        --key "$VAULT_CLIENT_KEY" --header "X-Vault-Token: $rootToken" "$@"
 }
 
 function unsealVault {
