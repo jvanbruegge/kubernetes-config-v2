@@ -1,14 +1,15 @@
-let prelude = ../prelude.dhall
+let prelude = (../packages.dhall).prelude
 
-in    λ ( i
-        : { path : Text
-          , port : Natural
-          , internalPort : Natural
-          , certPath : Text
-          , certName : Optional Text
-          }
-        )
-    → let name = prelude.Optional.default Text "vault" i.certName
+in  λ ( i
+      : { path : Text
+        , port : Natural
+        , internalPort : Natural
+        , certPath : Text
+        , rootCaPath : Text
+        , certName : Optional Text
+        }
+      ) →
+      let name = prelude.Optional.default Text "vault" i.certName
 
       in  ''
           ui = true
@@ -22,7 +23,7 @@ in    λ ( i
             address = "0.0.0.0:${Natural/show i.port}"
             tls_key_file = "${i.certPath}/${name}.key"
             tls_cert_file = "${i.certPath}/${name}.crt"
-            tls_client_ca_file = "${i.certPath}/ca.crt"
+            tls_client_ca_file = "${i.rootCaPath}"
             tls_require_and_verify_client_cert = true
           }
 

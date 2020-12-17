@@ -1,8 +1,8 @@
 let SimpleDeployment = ../SimpleDeployment.dhall
 
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let utils = ../../utils.dhall
 
@@ -12,7 +12,9 @@ let mkSelector =
 
 let mkMeta =
         λ(input : SimpleDeployment.Type)
-      → kube.ObjectMeta::{ name = input.name, namespace = Some input.namespace }
+      → kube.ObjectMeta::{ name = Some input.name, namespace = Some input.namespace }
+
+let ContainerPort = kube.ContainerPort.Type
 
 let getPorts =
         λ(xs : Optional (List Natural))
@@ -20,8 +22,12 @@ let getPorts =
       → let containerPorts =
               prelude.List.concatMap
                 kube.Container.Type
-                kube.ContainerPort.Type
-                (λ(x : kube.Container.Type) → x.ports)
+                ContainerPort
+                (   λ(x : kube.Container.Type)
+                  → prelude.List.concat
+                      ContainerPort
+                      (prelude.Optional.toList (List ContainerPort) x.ports)
+                )
                 input.containers
 
         let filterPorts =

@@ -1,0 +1,12 @@
+dn: ou=policies,dc=cerberus-systems,dc=de
+objectClass: organizationalUnit
+ou: policies
+
+
+dn: cn=default,ou=policies,dc=cerberus-systems,dc=de
+objectClass: pwdPolicy
+objectClass: organizationalRole
+cn: default
+pwdAttribute: userPassword
+pwdMinLength: 12
+pwdCheckQuality: 2

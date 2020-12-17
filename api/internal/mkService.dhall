@@ -1,8 +1,8 @@
 let SimpleDeployment = ../SimpleDeployment.dhall
 
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let helpers = ./helpers.dhall
 
@@ -34,9 +34,9 @@ in    λ(input : SimpleDeployment.Type)
                       , spec =
                           Some
                             kube.ServiceSpec::{
-                            , ports = ports
-                            , selector = helpers.mkSelector input
-                            , externalIPs = input.externalIPs
+                            , ports = Some ports
+                            , selector = Some (helpers.mkSelector input)
+                            , externalIPs = Some input.externalIPs
                             }
                       }
                   ]

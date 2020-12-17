@@ -1,4 +1,4 @@
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let pki_names = [ "pki_int_inside", "pki_int_outside" ]
 

@@ -1,4 +1,9 @@
 generated/
 ca/
+.vagrant/
 
+ca-chain.crt
 vault_keys.txt
+ldap_keys.txt
+*.log
+*.env

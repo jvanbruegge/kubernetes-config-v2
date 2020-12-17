@@ -8,7 +8,7 @@ objectClass: organizationalUnit
 ou: groups
 
 
-dn: displayName=nextcloud,ou=groups,dc=cerberus-systems,dc=de
-objectClass: cerberusGroup
-description: All users with an account on my nextcloud
-displayName: nextcloud
+dn: ou=services,dc=cerberus-systems,dc=de
+objectClass: organizationalUnit
+description: All services that have access to parts of the directory
+ou: services

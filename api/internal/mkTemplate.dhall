@@ -1,4 +1,4 @@
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
 let SimpleDeployment = ../SimpleDeployment.dhall
 
@@ -8,15 +8,15 @@ in    λ(input : SimpleDeployment.Type)
     → kube.PodTemplateSpec::{
       , metadata =
           kube.ObjectMeta::{
-          , name = input.name
-          , labels = helpers.mkSelector input
+          , name = Some input.name
+          , labels = Some (helpers.mkSelector input)
           }
       , spec =
           Some
             kube.PodSpec::{
             , containers = input.containers
-            , initContainers = input.initContainers
+            , initContainers = Some input.initContainers
             , serviceAccountName = input.serviceAccount
-            , volumes = input.volumes
+            , volumes = Some input.volumes
             }
       }

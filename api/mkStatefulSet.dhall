@@ -1,6 +1,6 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
-let prelude = ../prelude.dhall
+let prelude = (../packages.dhall).prelude
 
 let SimpleDeployment = ./SimpleDeployment.dhall
 
@@ -16,7 +16,7 @@ in    λ(input : SimpleDeployment.Type)
                   , serviceName = input.name
                   , selector =
                       kube.LabelSelector::{
-                      , matchLabels = helpers.mkSelector input
+                      , matchLabels = Some (helpers.mkSelector input)
                       }
                   , template = ./internal/mkTemplate.dhall input
                   , replicas = Some input.replicas

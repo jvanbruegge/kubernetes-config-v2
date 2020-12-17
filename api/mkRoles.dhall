@@ -1,6 +1,6 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
-let prelude = ../prelude.dhall
+let prelude = (../packages.dhall).prelude
 
 let Rule = kube.PolicyRule.Type
 
@@ -18,7 +18,7 @@ let g =
 
 in    λ(i : Roles.Type)
     → let meta =
-            kube.ObjectMeta::{ name = i.name, namespace = Some i.namespace }
+            kube.ObjectMeta::{ name = Some i.name, namespace = Some i.namespace }
 
       let serviceAccount =
                   if i.createAccount
@@ -27,7 +27,7 @@ in    λ(i : Roles.Type)
                       kube.ServiceAccount::{
                       , metadata =
                           kube.ObjectMeta::{
-                          , name = i.serviceAccount
+                          , name = Some i.serviceAccount
                           , namespace = Some i.namespace
                           }
                       }
@@ -40,7 +40,7 @@ in    λ(i : Roles.Type)
               Rule
               i.clusterRules
               ( kube.Resource.ClusterRole
-                  kube.ClusterRole::{ metadata = meta, rules = i.clusterRules }
+                  kube.ClusterRole::{ metadata = meta, rules = Some i.clusterRules }
               )
 
       let clusterBinding =
@@ -58,7 +58,7 @@ in    λ(i : Roles.Type)
                                 i.name
                                 i.clusterRoleRefName
                           }
-                      , subjects =
+                      , subjects = Some
                           [ { kind = "ServiceAccount"
                             , name = i.serviceAccount
                             , namespace = Some i.namespace
@@ -75,7 +75,7 @@ in    λ(i : Roles.Type)
               Rule
               i.rules
               ( kube.Resource.Role
-                  kube.Role::{ metadata = meta, rules = i.rules }
+                  kube.Role::{ metadata = meta, rules = Some i.rules }
               )
 
       let roleBinding =
@@ -90,7 +90,7 @@ in    λ(i : Roles.Type)
                           , name =
                               prelude.Optional.default Text i.name i.roleRefName
                           }
-                      , subjects =
+                      , subjects = Some
                           [ { kind = "ServiceAccount"
                             , name = i.serviceAccount
                             , namespace = Some i.namespace

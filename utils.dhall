@@ -1,4 +1,4 @@
-let prelude = ./prelude.dhall
+let prelude = (./packages.dhall).prelude
 
 let NonEmpty = λ(a : Type) → { head : a, tail : List a }
 
@@ -12,6 +12,13 @@ let nonEmptyCreate =
 
 let nonEmptyToList =
       λ(a : Type) → λ(input : NonEmpty a) → [ input.head ] # input.tail
+
+let nonEmptyMap =
+        λ(a : Type)
+      → λ(b : Type)
+      → λ(f : a → b)
+      → λ(input : NonEmpty a)
+      → { head = f input.head, tail = prelude.List.map a b f input.tail }
 
 let listIndexedMap =
         λ(a : Type)
@@ -35,9 +42,11 @@ let textPrepend = λ(a : Text) → λ(b : Text) → a ++ b
 in  { NonEmpty =
         { head = nonEmptyHead
         , create = nonEmptyCreate
+        , map = nonEmptyMap
         , toList = nonEmptyToList
+        , Type = NonEmpty
         }
     , List =
         { indexedMap = listIndexedMap, naturalElementOf = listNaturalElementOf }
-    , Text = { prepend = textPrepend }
+    , Text.prepend = textPrepend
     }

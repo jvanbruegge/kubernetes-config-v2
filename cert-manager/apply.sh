@@ -2,9 +2,9 @@
 
 action=$1
 
-echo "$(< ./customResources.yaml)
----
-$(dhall-to-yaml --omit-empty --documents --file cert-manager.dhall)
+kubectl $action -f ./customResources.yaml
+
+echo "$(dhall-to-yaml --documents --file cert-manager.dhall)
 ---
 $(dhall-to-yaml --file letsencrypt.dhall)
 " | kubectl $action -f -

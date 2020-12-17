@@ -1,59 +1,60 @@
 let api = ../api.dhall
 
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
 let clusterRules =
       [ kube.PolicyRule::{
         , verbs = [ "list", "watch" ]
-        , resources = [ "configmaps", "endpoints", "nodes", "pods", "secrets" ]
-        , apiGroups = [ "" ]
+        , resources = Some
+          [ "configmaps", "endpoints", "nodes", "pods", "secrets" ]
+        , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "get" ]
-        , resources = [ "nodes" ]
-        , apiGroups = [ "" ]
+        , resources = Some [ "nodes" ]
+        , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "get", "list", "watch" ]
-        , resources = [ "services" ]
-        , apiGroups = [ "" ]
+        , resources = Some [ "services" ]
+        , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "create", "patch" ]
-        , resources = [ "events" ]
-        , apiGroups = [ "" ]
+        , resources = Some [ "events" ]
+        , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "get", "list", "watch" ]
-        , resources = [ "ingresses" ]
-        , apiGroups = [ "extensions" ]
+        , resources = Some [ "ingresses" ]
+        , apiGroups = Some [ "extensions" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "update" ]
-        , resources = [ "ingresses/status" ]
-        , apiGroups = [ "extensions" ]
+        , resources = Some [ "ingresses/status" ]
+        , apiGroups = Some [ "extensions" ]
         }
       ]
 
 let rules =
       [ kube.PolicyRule::{
         , verbs = [ "get" ]
-        , resources = [ "configmaps", "pods", "secrets", "namespaces" ]
-        , apiGroups = [ "" ]
+        , resources = Some [ "configmaps", "pods", "secrets", "namespaces" ]
+        , apiGroups = Some [ "" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "get", "update", "create" ]
-        , resources = [ "configmaps", "endpoints" ]
-        , apiGroups = [ "" ]
+        , resources = Some [ "configmaps", "endpoints" ]
+        , apiGroups = Some [ "" ]
         }
       ]
 
-in    λ(input : ./Settings.dhall)
-    → api.mkRoles
+in  λ(input : ./Settings.dhall) →
+      api.mkRoles
         api.Roles::{
         , name = input.serviceAccount
-        , clusterRules = clusterRules
-        , rules = rules
+        , clusterRules
+        , rules
         , namespace = input.namespace
         , serviceAccount = input.serviceAccount
         }

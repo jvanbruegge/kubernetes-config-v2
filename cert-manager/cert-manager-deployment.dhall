@@ -1,23 +1,23 @@
-let kube = ../kubernetes.dhall
+let kube = (../packages.dhall).kubernetes
 
 let api = ../api.dhall
 
 let certManagerContainer =
       kube.Container::{
       , name = "cert-manager"
-      , image = Some "quay.io/jetstack/cert-manager-controller:v0.12.0"
-      , args =
+      , image = Some "quay.io/jetstack/cert-manager-controller:v1.1.0"
+      , args = Some
           [ "--v=2"
           , "--cluster-resource-namespace=\$(POD_NAMESPACE)"
           , "--leader-election-namespace=\$(POD_NAMESPACE)"
           ]
-      , ports =
+      , ports = Some
           [ kube.ContainerPort::{ containerPort = 9402, protocol = Some "TCP" }
           ]
-      , env =
+      , env = Some
           [ kube.EnvVar::{
             , name = "POD_NAMESPACE"
-            , valueFrom =
+            , valueFrom = Some
                 kube.EnvVarSource::{
                 , fieldRef =
                     Some

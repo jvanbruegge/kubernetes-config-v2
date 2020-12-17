@@ -15,7 +15,6 @@ in  { hosts = hosts
     , postalCode = 80939
     , streetAddress = "Schlößlanger 5"
     , organizationName = "Cerberus Systems"
-    , organizationalUnitName = None Text
     , commonName = "Cerberus Systems Root Certificate Authority"
     , emailAddress = "ca@cerberus-systems.de"
     , userEmail = "jan@vanbruegge.de"

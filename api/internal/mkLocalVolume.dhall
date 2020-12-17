@@ -1,6 +1,6 @@
-let kube = ../../kubernetes.dhall
+let kube = (../../packages.dhall).kubernetes
 
-let prelude = ../../prelude.dhall
+let prelude = (../../packages.dhall).prelude
 
 let globalSettings = ../../settings.dhall
 
@@ -16,29 +16,29 @@ in    λ(input : Volume.Type)
 
       in  kube.PersistentVolume::{
           , metadata =
-              kube.ObjectMeta::{ name = name, namespace = Some input.namespace }
+              kube.ObjectMeta::{ name = Some name, namespace = Some input.namespace }
           , spec =
               Some
                 kube.PersistentVolumeSpec::{
-                , capacity = [ { mapKey = "storage", mapValue = input.size } ]
-                , accessModes = [ "ReadWriteOnce" ]
+                , capacity = Some [ { mapKey = "storage", mapValue = input.size } ]
+                , accessModes = Some [ "ReadWriteOnce" ]
                 , persistentVolumeReclaimPolicy = Some "Retain"
                 , storageClassName = Some "local-storage"
                 , local =
                     Some { path = "/data/${directory}", fsType = None Text }
-                , nodeAffinity =
+                , nodeAffinity = Some
                     { required =
                         Some
                           { nodeSelectorTerms =
                               [ kube.NodeSelectorTerm::{
-                                , matchExpressions =
+                                , matchExpressions = Some
                                     [ { key = "kubernetes.io/hostname"
                                       , operator = "In"
-                                      , values =
-                                            utils.NonEmpty.toList
+                                      , values = Some 
+                                            (utils.NonEmpty.toList
                                               Text
                                               globalSettings.hosts
-                                          # [ "minikube" ]
+                                          # [ "kube-master" ])
                                       }
                                     ]
                                 }
