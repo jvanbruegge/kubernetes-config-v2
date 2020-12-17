@@ -5,15 +5,15 @@ let kube = (../packages.dhall).kubernetes
 let secrets =
       kube.PolicyRule::{
       , verbs = [ "get", "list", "watch", "create", "update", "delete" ]
-      , resources = [ "secrets" ]
-      , apiGroups = [ "" ]
+      , resources = Some [ "secrets" ]
+      , apiGroups = Some [ "" ]
       }
 
 let events =
       kube.PolicyRule::{
       , verbs = [ "create", "patch" ]
-      , resources = [ "events" ]
-      , apiGroups = [ "" ]
+      , resources = Some [ "events" ]
+      , apiGroups = Some [ "" ]
       }
 
 let mkLeaderElection =
@@ -21,8 +21,8 @@ let mkLeaderElection =
       → let rules =
               [ kube.PolicyRule::{
                 , verbs = [ "get", "create", "update", "patch" ]
-                , resources = [ "configmaps" ]
-                , apiGroups = [ "" ]
+                , resources = Some [ "configmaps" ]
+                , apiGroups = Some [ "" ]
                 }
               ]
 
@@ -51,13 +51,13 @@ let mkIssuerController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "issuers", "issuers/status" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "issuers", "issuers/status" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "issuers" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "issuers" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , secrets
             , events
@@ -69,13 +69,13 @@ let mkClusterIssuerController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "clusterissuers", "clusterissuers/status" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "clusterissuers", "clusterissuers/status" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "clusterissuers" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "clusterissuers" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , secrets
             , events
@@ -87,36 +87,36 @@ let mkCertificateController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources =
+              , resources = Some
                   [ "certificates"
                   , "certificates/status"
                   , "certificaterequests"
                   , "certificaterequests/status"
                   ]
-              , apiGroups = [ "cert-manager.io" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources =
+              , resources = Some
                   [ "certificates"
                   , "certificaterequests"
                   , "clusterissuers"
                   , "issuers"
                   ]
-              , apiGroups = [ "cert-manager.io" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources =
+              , resources = Some
                   [ "certificates/finalizers"
                   , "certificaterequests/finalizers"
                   ]
-              , apiGroups = [ "cert-manager.io" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "create", "delete", "get", "list", "watch" ]
-              , resources = [ "orders" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "orders" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , secrets
             , events
@@ -128,28 +128,28 @@ let mkOrdersController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "orders", "orders/status" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "orders", "orders/status" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "orders", "challenges" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "orders", "challenges" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "clusterissuers", "issuers" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "clusterissuers", "issuers" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "create", "delete" ]
-              , resources = [ "challenges", "challenges" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "challenges", "challenges" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "orders/finalizers" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "orders/finalizers" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , secrets
             , events
@@ -161,35 +161,35 @@ let mkChallengeController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "challenges", "challenges/status" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "challenges", "challenges/status" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "challenges" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "challenges" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "clusterissuers", "issuers" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "clusterissuers", "issuers" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , secrets
             , events
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch", "create", "delete" ]
-              , resources = [ "pods", "services" ]
-              , apiGroups = [ "" ]
+              , resources = Some [ "pods", "services" ]
+              , apiGroups = Some [ "" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch", "create", "delete", "update" ]
-              , resources = [ "ingresses" ]
-              , apiGroups = [ "extensions" ]
+              , resources = Some [ "ingresses" ]
+              , apiGroups = Some [ "extensions" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "challenges/finalizers" ]
-              , apiGroups = [ "acme.cert-manager.io" ]
+              , resources = Some [ "challenges/finalizers" ]
+              , apiGroups = Some [ "acme.cert-manager.io" ]
               }
             , secrets
             ]
@@ -200,28 +200,28 @@ let mkIngressShimController =
       let clusterRules =
             [ kube.PolicyRule::{
               , verbs = [ "create", "update", "delete" ]
-              , resources = [ "certificates", "certificaterequests" ]
-              , apiGroups = [ "cert-manager.io" ]
+              , resources = Some [ "certificates", "certificaterequests" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources =
+              , resources = Some
                   [ "certificates"
                   , "certificaterequests"
                   , "issuers"
                   , "clusterissuers"
                   ]
-              , apiGroups = [ "cert-manager.io" ]
+              , apiGroups = Some [ "cert-manager.io" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "get", "list", "watch" ]
-              , resources = [ "ingresses" ]
-              , apiGroups = [ "extensions" ]
+              , resources = Some [ "ingresses" ]
+              , apiGroups = Some [ "extensions" ]
               }
             , kube.PolicyRule::{
               , verbs = [ "update" ]
-              , resources = [ "ingresses/finalizers" ]
-              , apiGroups = [ "extensions" ]
+              , resources = Some [ "ingresses/finalizers" ]
+              , apiGroups = Some [ "extensions" ]
               }
             , events
             ]

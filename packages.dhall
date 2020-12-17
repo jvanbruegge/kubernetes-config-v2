@@ -1,10 +1,10 @@
 let openssl =
-      https://raw.githubusercontent.com/jvanbruegge/dhall-openssl/4fbc4307c42ee1f1f34f0348522c8eeff322e17b/package.dhall sha256:6f1cd31af6093362b03aaab5d4a9a86bc44ef5b223b1aa785cd27826175baab5
+      https://raw.githubusercontent.com/jvanbruegge/dhall-openssl/4e638f96bcef2de7aac57b8ec4b2a12acb2f1d88/package.dhall sha256:d3bfa9880744d7abc70d4291a12681ef965b468d2412b7638e419082bc657942
 
 let prelude =
-      https://raw.githubusercontent.com/dhall-lang/dhall-lang/1f2553f4cc885d01b1f37ff4c8e9eb00e80765d3/Prelude/package.dhall sha256:09d41afeee8eb9401be18ec074392898be1e778b75163f1de8a5f91424471181
+      https://raw.githubusercontent.com/dhall-lang/dhall-lang/baaac8ce151c5fc876377f784e9c32ace963a56f/Prelude/package.dhall sha256:26b0ef498663d269e4dc6a82b0ee289ec565d683ef4c00d0ebdd25333a5a3c98
 
 let kubernetes =
-      https://raw.githubusercontent.com/dhall-lang/dhall-kubernetes/59132b47b7c796eeeca576cb7ca6b96077b56be6/1.18/package.dhall sha256:38fa542207bfaa313e0f8a3474e9b923dd3a84d2dc6230431804010d357b256a
+      https://raw.githubusercontent.com/dhall-lang/dhall-kubernetes/master/1.19/package.dhall sha256:1ba3b2108e8f38427f649f336e21f08f20d825c91b3ac64033be8c98783345d2
 
 in  { prelude, openssl, kubernetes }

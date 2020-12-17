@@ -37,9 +37,12 @@ in  λ(input : SimpleDeployment.Type) →
                             [ { path = Some "/"
                               , pathType = Some "Prefix"
                               , backend = kube.IngressBackend::{
-                                , serviceName = Some input.name
-                                , servicePort = Some
-                                    (kube.IntOrString.Int x.containerPort)
+                                , service = Some kube.IngressServiceBackend::{
+                                  , name = input.name
+                                  , port = Some kube.ServiceBackendPort::{
+                                    , number = Some x.containerPort
+                                    }
+                                  }
                                 }
                               }
                             ]
@@ -95,4 +98,9 @@ in  λ(input : SimpleDeployment.Type) →
       in  prelude.Optional.default
             (List kube.Resource)
             ingress
-            (prelude.Optional.map kube.Ingress.Type (List kube.Resource) (\(x : kube.Ingress.Type) -> [ kube.Resource.Ingress x ]) input.ingress.raw)
+            ( prelude.Optional.map
+                kube.Ingress.Type
+                (List kube.Resource)
+                (λ(x : kube.Ingress.Type) → [ kube.Resource.Ingress x ])
+                input.ingress.raw
+            )

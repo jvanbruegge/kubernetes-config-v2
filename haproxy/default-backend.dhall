@@ -29,9 +29,13 @@ in  λ(input : ./Settings.dhall) →
                     ]
                   }
                 , spec = Some kube.IngressSpec::{
-                  , backend = Some kube.IngressBackend::{
-                    , serviceName = Some "ingress-default-backend"
-                    , servicePort = Some (kube.IntOrString.Int 8080)
+                  , defaultBackend = Some kube.IngressBackend::{
+                    , service = Some kube.IngressServiceBackend::{
+                      , name = "ingress-default-backend"
+                      , port = Some kube.ServiceBackendPort::{
+                        , number = Some 8080
+                        }
+                      }
                     }
                   }
                 }

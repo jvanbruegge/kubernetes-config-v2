@@ -1,4 +1,4 @@
-let prelude = ./prelude.dhall
+let prelude = (./packages.dhall).prelude
 
 let NonEmpty = λ(a : Type) → { head : a, tail : List a }
 

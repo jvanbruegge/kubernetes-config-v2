@@ -67,6 +67,10 @@ function generateCert() {
     fi
 }
 
+[ -e "$dir" ] && rm -r "$dir"
+head -n3 "$caDir/ca.index" > "$caDir/ca.index.new"
+mv "$caDir/ca.index.new" "$caDir/ca.index"
+rm "$caDir"/*.old
 mkdir -p "$dir"
 
 generateCert "vault"
