@@ -63,3 +63,5 @@ runStep install-kubernetes
 runStep initialize-vault
 
 runStep initialize-openldap
+
+runStep initialize-bitwarden

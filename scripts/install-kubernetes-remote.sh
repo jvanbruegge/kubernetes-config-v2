@@ -21,8 +21,6 @@ EOF
 # Apply sysctl params without reboot
 sudo sysctl --system
 
-echo "kube-master" | sudo tee /etc/hostname > /dev/null
-
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 
