@@ -68,5 +68,10 @@ kubectl taint nodes --all node-role.kubernetes.io/master-
 sudo mkdir -p /data
 sudo chown -R "$SERVER_USER:$SERVER_USER" /data
 
+echo "allowedUnsafeSysctls:
+  - 'net.ipv4.ip_forward'" >> /var/lib/kubelet/config.yaml
+
+sudo systemctl restart kubelet.service
+
 echo "Waiting for master node to become ready"
 kubectl wait --for=condition=ready --timeout=120s nodes/kube-master > /dev/null

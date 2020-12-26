@@ -11,6 +11,7 @@ let Deployment =
       , serviceAccount : Optional Text
       , externalIPs : List Text
       , servicePorts : Optional (List Natural)
+      , securityContext : Optional kube.PodSecurityContext.Type
       , ingress : Ingress.Type
       , volumes : List kube.Volume.Type
       , extraDocuments : List kube.Resource
@@ -22,6 +23,7 @@ let default =
       , replicas = 1
       , serviceAccount = None Text
       , externalIPs = [] : List Text
+      , securityContext = None kube.PodSecurityContext.Type
       , servicePorts = None (List Natural)
       , ingress = Ingress.default
       , volumes = [] : List kube.Volume.Type
