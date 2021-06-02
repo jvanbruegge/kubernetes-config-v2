@@ -29,7 +29,7 @@ let wireguardContainer =
           , value = Some "wireguard.${utils.NonEmpty.head Text settings.hosts}"
           }
         , kube.EnvVar::{ name = "SERVERPORT", value = Some (Natural/show port) }
-        , kube.EnvVar::{ name = "PEERS", value = Some "10" }
+        , kube.EnvVar::{ name = "PEERS", value = Some "50" }
         , kube.EnvVar::{ name = "PEERDNS", value = Some "1.1.1.1" }
         , kube.EnvVar::{ name = "INTERNAL_SUBNET", value = Some "10.0.0.0" }
         , kube.EnvVar::{ name = "ALLOWEDIPS", value = Some "10.0.0.0/24" }
