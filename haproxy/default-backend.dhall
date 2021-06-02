@@ -7,7 +7,7 @@ let container =
       , name = "ingress-default-backend"
       , image = Some "gcr.io/google_containers/defaultbackend:1.0"
       , ports = Some
-        [ kube.ContainerPort::{ containerPort = 8080, name = Some "http" } ]
+        [ kube.ContainerPort::{ containerPort = +8080, name = Some "http" } ]
       }
 
 in  λ(input : ./Settings.dhall) →
@@ -15,7 +15,7 @@ in  λ(input : ./Settings.dhall) →
             api.SimpleDeployment::{
             , name = "ingress-default-backend"
             , namespace = input.namespace
-            , replicas = 0
+            , replicas = +0
             , containers = [ container ]
             , ingress = api.Ingress::{
               , raw = Some kube.Ingress::{
@@ -33,7 +33,7 @@ in  λ(input : ./Settings.dhall) →
                     , service = Some kube.IngressServiceBackend::{
                       , name = "ingress-default-backend"
                       , port = Some kube.ServiceBackendPort::{
-                        , number = Some 8080
+                        , number = Some +8080
                         }
                       }
                     }

@@ -6,9 +6,9 @@ let ann = ../haproxy/annotations.dhall
 
 let dataPath = "/vault"
 
-let vaultPort = 8200
+let vaultPort = +8200
 
-let internalPort = 8300
+let internalPort = +8300
 
 let volumeName = "vault-data"
 

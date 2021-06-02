@@ -27,7 +27,7 @@ let ldapContainer =
           , kube.EnvVar::{ name = "LDAP_TLS_ENFORCE", value = Some "true" }
           ]
       , ports = Some
-          [ kube.ContainerPort::{ containerPort = 636, name = Some "ldaps" } ]
+          [ kube.ContainerPort::{ containerPort = +636, name = Some "ldaps" } ]
       , volumeMounts = Some
           [ kube.VolumeMount::{
             , mountPath = "/var/lib/ldap"

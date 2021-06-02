@@ -7,7 +7,7 @@ in  { mkRoles = ./api/mkRoles.dhall
     , mkStatefulSet = ./api/mkStatefulSet.dhall
     , mkNamespace = ./api/mkNamespace.dhall
     , mkVolume = ./api/mkVolume.dhall
-    , noIngress = Ingress::{ ingressPorts = Some ([] : List Natural) }
+    , noIngress = Ingress::{ ingressPorts = Some ([] : List Integer) }
     , sslPassthrough =
         Ingress::{ annotations = [ ann.sslPassthrough, ann.sslRedirect ] }
     , letsencrypt = Ingress::{ requestCertificate = True }

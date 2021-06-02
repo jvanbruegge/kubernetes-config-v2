@@ -12,7 +12,7 @@ let certManagerContainer =
           , "--leader-election-namespace=\$(POD_NAMESPACE)"
           ]
       , ports = Some
-          [ kube.ContainerPort::{ containerPort = 9402, protocol = Some "TCP" }
+          [ kube.ContainerPort::{ containerPort = +9402, protocol = Some "TCP" }
           ]
       , env = Some
           [ kube.EnvVar::{

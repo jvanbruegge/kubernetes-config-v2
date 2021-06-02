@@ -32,7 +32,7 @@ let adminContainer =
             }
           ]
       , ports = Some
-          [ kube.ContainerPort::{ containerPort = 443, name = Some "https" } ]
+          [ kube.ContainerPort::{ containerPort = +443, name = Some "https" } ]
       , volumeMounts = Some
           [ kube.VolumeMount::{
             , mountPath = "/container/service/ldap-client/assets/certs"

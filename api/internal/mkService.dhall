@@ -18,7 +18,7 @@ in    λ(input : SimpleDeployment.Type)
                   , protocol = x.protocol
                   , targetPort =
                       Some
-                        (< Int : Natural | String : Text >.Int x.containerPort)
+                        (< Int : Integer | String : Text >.Int x.containerPort)
                   }
               )
               (helpers.getPorts input.servicePorts input)

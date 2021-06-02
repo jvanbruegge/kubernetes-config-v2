@@ -27,14 +27,14 @@ in    λ(input : SimpleDeployment.Type)
               input
             ⫽ { servicePorts =
                   prelude.Optional.concat
-                    (List Natural)
+                    (List Integer)
                     ( prelude.Optional.map
-                        (List Natural)
-                        (Optional (List Natural))
-                        (   λ(xs : List Natural)
-                          →       if prelude.List.null Natural xs
+                        (List Integer)
+                        (Optional (List Integer))
+                        (   λ(xs : List Integer)
+                          →       if prelude.List.null Integer xs
 
-                            then  None (List Natural)
+                            then  None (List Integer)
 
                             else  Some xs
                         )

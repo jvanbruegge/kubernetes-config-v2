@@ -13,7 +13,7 @@ let bitwardenContainer =
       , name = "bitwarden"
       , image = Some "registry.hub.docker.com/bitwardenrs/server:1.17.0-alpine"
       , ports = Some
-        [ kube.ContainerPort::{ containerPort = 80, protocol = Some "TCP" } ]
+        [ kube.ContainerPort::{ containerPort = +80, protocol = Some "TCP" } ]
       , env = Some
         [ kube.EnvVar::{ name = "WEBSOCKET_ENABLED", value = Some "true" }
         , kube.EnvVar::{ name = "SIGNUPS_ALLOWED", value = Some "false" }

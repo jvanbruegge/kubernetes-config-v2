@@ -33,9 +33,9 @@ let listIndexedMap =
               (λ(x : Indexed) → f x.index x.value)
               (prelude.List.indexed a list)
 
-let listNaturalElementOf =
-        λ(x : Natural)
-      → prelude.List.any Natural (λ(y : Natural) → prelude.Natural.equal x y)
+let listIntegerElementOf =
+        λ(x : Integer)
+      → prelude.List.any Integer (λ(y : Integer) → prelude.Integer.equal x y)
 
 let textPrepend = λ(a : Text) → λ(b : Text) → a ++ b
 
@@ -47,6 +47,6 @@ in  { NonEmpty =
         , Type = NonEmpty
         }
     , List =
-        { indexedMap = listIndexedMap, naturalElementOf = listNaturalElementOf }
+        { indexedMap = listIndexedMap, integerElementOf = listIntegerElementOf }
     , Text.prepend = textPrepend
     }

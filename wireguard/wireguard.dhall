@@ -14,7 +14,7 @@ let volumeName = "wireguard-data"
 
 let claimName = "wireguard-claim"
 
-let port = 51820
+let port = +51820
 
 let wireguardContainer =
       kube.Container::{
@@ -28,7 +28,7 @@ let wireguardContainer =
           , name = "SERVERURL"
           , value = Some "wireguard.${utils.NonEmpty.head Text settings.hosts}"
           }
-        , kube.EnvVar::{ name = "SERVERPORT", value = Some (Natural/show port) }
+        , kube.EnvVar::{ name = "SERVERPORT", value = Some (Integer/show port) }
         , kube.EnvVar::{ name = "PEERS", value = Some "50" }
         , kube.EnvVar::{ name = "PEERDNS", value = Some "1.1.1.1" }
         , kube.EnvVar::{ name = "INTERNAL_SUBNET", value = Some "10.0.0.0" }
@@ -50,7 +50,7 @@ let mkDeployment =
               , namespace
               , containers = [ wireguardContainer ]
               , ingress = api.noIngress
-              , servicePorts = Some ([] : List Natural)
+              , servicePorts = Some ([] : List Integer)
               , externalIPs = settings.serverIPs
               , securityContext = Some kube.PodSecurityContext::{
                 , sysctls = Some [ { name = "net.ipv4.ip_forward", value = "1" } ]

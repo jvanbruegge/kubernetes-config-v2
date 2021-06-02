@@ -39,17 +39,17 @@ let mkContainer =
           ]
         , ports = Some
           [ kube.ContainerPort::{
-            , containerPort = 80
+            , containerPort = +80
             , name = Some "http"
             , protocol = Some "TCP"
             }
           , kube.ContainerPort::{
-            , containerPort = 443
+            , containerPort = +443
             , name = Some "https"
             , protocol = Some "TCP"
             }
           , kube.ContainerPort::{
-            , containerPort = 1936
+            , containerPort = +1936
             , name = Some "stats"
             , protocol = Some "TCP"
             }
@@ -82,7 +82,7 @@ in  λ(input : ./Settings.dhall) →
             api.SimpleDeployment::{
             , name = "haproxy"
             , namespace = input.namespace
-            , servicePorts = Some ([] : List Natural)
+            , servicePorts = Some ([] : List Integer)
             , containers =
               [ mkContainer
                   { configMapName = "haproxy-config"
@@ -96,13 +96,13 @@ in  λ(input : ./Settings.dhall) →
             }
 
       let mkServicePort =
-            λ(port : Natural) →
+            λ(port : Integer) →
             λ(name : Text) →
               kube.ServicePort::{
               , port
               , name = Some name
               , protocol = Some "TCP"
-              , targetPort = Some (< Int : Natural | String : Text >.Int port)
+              , targetPort = Some (< Int : Integer | String : Text >.Int port)
               }
 
       let service =
@@ -110,10 +110,10 @@ in  λ(input : ./Settings.dhall) →
             , metadata = helpers.mkMeta config
             , spec = Some kube.ServiceSpec::{
               , ports = Some
-                [ mkServicePort 80 "http"
-                , mkServicePort 443 "https"
-                , mkServicePort 1936 "stats"
-                , mkServicePort 636 "ldaps"
+                [ mkServicePort +80 "http"
+                , mkServicePort +443 "https"
+                , mkServicePort +1936 "stats"
+                , mkServicePort +636 "ldaps"
                 ]
               , selector = Some (helpers.mkSelector config)
               , externalIPs = Some config.externalIPs

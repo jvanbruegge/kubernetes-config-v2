@@ -7,10 +7,10 @@ let Deployment =
       , initContainers : List kube.Container.Type
       , name : Text
       , namespace : Text
-      , replicas : Natural
+      , replicas : Integer
       , serviceAccount : Optional Text
       , externalIPs : List Text
-      , servicePorts : Optional (List Natural)
+      , servicePorts : Optional (List Integer)
       , securityContext : Optional kube.PodSecurityContext.Type
       , ingress : Ingress.Type
       , volumes : List kube.Volume.Type
@@ -20,11 +20,11 @@ let Deployment =
 let default =
       { containers = [] : List kube.Container.Type
       , initContainers = [] : List kube.Container.Type
-      , replicas = 1
+      , replicas = +1
       , serviceAccount = None Text
       , externalIPs = [] : List Text
       , securityContext = None kube.PodSecurityContext.Type
-      , servicePorts = None (List Natural)
+      , servicePorts = None (List Integer)
       , ingress = Ingress.default
       , volumes = [] : List kube.Volume.Type
       , extraDocuments = [] : List kube.Resource

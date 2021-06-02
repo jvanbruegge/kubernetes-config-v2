@@ -17,7 +17,7 @@ let mkMeta =
 let ContainerPort = kube.ContainerPort.Type
 
 let getPorts =
-        λ(xs : Optional (List Natural))
+        λ(xs : Optional (List Integer))
       → λ(input : SimpleDeployment.Type)
       → let containerPorts =
               prelude.List.concatMap
@@ -32,25 +32,25 @@ let getPorts =
 
         let filterPorts =
               prelude.Optional.default
-                (List Natural)
+                (List Integer)
                 ( prelude.List.map
                     kube.ContainerPort.Type
-                    Natural
+                    Integer
                     (λ(x : kube.ContainerPort.Type) → x.containerPort)
                     containerPorts
                 )
                 ( prelude.Optional.fold
-                    (List Natural)
+                    (List Integer)
                     xs
-                    (Optional (List Natural))
-                    (λ(x : List Natural) → Some x)
+                    (Optional (List Integer))
+                    (λ(x : List Integer) → Some x)
                     input.servicePorts
                 )
 
         in  prelude.List.filter
               kube.ContainerPort.Type
               (   λ(x : kube.ContainerPort.Type)
-                → utils.List.naturalElementOf x.containerPort filterPorts
+                → utils.List.integerElementOf x.containerPort filterPorts
               )
               containerPorts
 

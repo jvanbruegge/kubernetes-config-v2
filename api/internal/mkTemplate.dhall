@@ -6,7 +6,7 @@ let helpers = ./helpers.dhall
 
 in    λ(input : SimpleDeployment.Type)
     → kube.PodTemplateSpec::{
-      , metadata =
+      , metadata = Some
           kube.ObjectMeta::{
           , name = Some input.name
           , labels = Some (helpers.mkSelector input)
