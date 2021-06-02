@@ -11,12 +11,13 @@ let claimName = "bitwarden-claim"
 let bitwardenContainer =
       kube.Container::{
       , name = "bitwarden"
-      , image = Some "registry.hub.docker.com/bitwardenrs/server:1.17.0-alpine"
+      , image = Some "registry.hub.docker.com/vaultwarden/server:1.21.0-alpine"
       , ports = Some
         [ kube.ContainerPort::{ containerPort = +80, protocol = Some "TCP" } ]
       , env = Some
         [ kube.EnvVar::{ name = "WEBSOCKET_ENABLED", value = Some "true" }
         , kube.EnvVar::{ name = "SIGNUPS_ALLOWED", value = Some "false" }
+        , kube.EnvVar::{ name = "DOMAIN", value = Some "https://bitwarden.cerberus-systems.de" }
         ]
       , volumeMounts = Some
         [ kube.VolumeMount::{ mountPath = "/data", name = volumeName } ]
