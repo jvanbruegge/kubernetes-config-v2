@@ -15,6 +15,7 @@ let Deployment =
       , ingress : Ingress.Type
       , volumes : List kube.Volume.Type
       , extraDocuments : List kube.Resource
+      , shareProcessNamespace : Optional Bool
       }
 
 let default =
@@ -28,6 +29,7 @@ let default =
       , ingress = Ingress.default
       , volumes = [] : List kube.Volume.Type
       , extraDocuments = [] : List kube.Resource
+      , shareProcessNamespace = None Bool
       }
 
 in  { Type = Deployment, default = default }

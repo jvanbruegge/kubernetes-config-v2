@@ -27,6 +27,7 @@ let globalSettings = ../settings.dhall
 let agentConfig =
       λ(certs : Certs.Type) →
       λ(input : SimpleDeployment.Type) →
+      λ(exitAfterAuth : Bool) →
         let subdomain =
               prelude.Optional.default Text input.namespace certs.subdomain
 
@@ -76,11 +77,26 @@ let agentConfig =
         let mkTemplate =
               λ(field : Text) →
               λ(list : Bool) →
+              λ(cert : Bool) →
+              λ(processName : Optional Text) →
               λ(path : Text) →
                 ''
                 template {
                     destination = "${path}"
                     error_on_missing_key = true
+                    command = "${if    exitAfterAuth || list || cert == False
+                                 then  ""
+                                 else  prelude.Optional.default
+                                         Text
+                                         ""
+                                         ( prelude.Optional.map
+                                             Text
+                                             Text
+                                             ( λ(process : Text) →
+                                                 "sh -c 'sleep 5; pkill -SIGHUP ${process}'"
+                                             )
+                                             processName
+                                         )}"
                     contents = <<EOF
                 ${mkContent list field}
                     EOF
@@ -114,13 +130,15 @@ let agentConfig =
                           in  mkTemplate
                                 field
                                 isList
+                                cert
+                                x.processName
                                 "${certPath}${subdir}/${x.name}.${ext}"
                       )
                       list
                   )
 
         in  ''
-            exit_after_auth = true
+            exit_after_auth = ${if exitAfterAuth then "true" else "false"}
 
             auto_auth {
                 method "kubernetes" {
@@ -153,44 +171,81 @@ in  λ(certs : Certs.Type) →
     λ(input : SimpleDeployment.Type) →
       let agentConfigMapName = "vault-agent-${certs.volumeName}-config"
 
-      let configMap =
+      let initConfigMap =
             kube.ConfigMap::{
             , metadata = kube.ObjectMeta::{
-              , name = Some agentConfigMapName
+              , name = Some "${agentConfigMapName}-init"
               , namespace = Some input.namespace
               }
             , data = Some
-              [ { mapKey = configFile, mapValue = agentConfig certs input } ]
-            }
-
-      let vaultAgent =
-            kube.Container::{
-            , name = "vault-agent-${certs.volumeName}"
-            , image = Some "registry.hub.docker.com/library/vault:1.3.0"
-            , args = Some [ "agent", "-config=${configPath}/${configFile}" ]
-            , volumeMounts = Some
-              [ kube.VolumeMount::{
-                , mountPath = configPath
-                , name = agentConfigMapName
-                }
-              , kube.VolumeMount::{ mountPath = tokenPath, name = tokenVolume }
-              , kube.VolumeMount::{
-                , mountPath = certPath
-                , name = certs.volumeName
-                }
-              , kube.VolumeMount::{ mountPath = caPath, name = caVolume }
+              [ { mapKey = configFile, mapValue = agentConfig certs input True }
               ]
             }
 
+      let sidecarConfigMap =
+            kube.ConfigMap::{
+            , metadata = kube.ObjectMeta::{
+              , name = Some "${agentConfigMapName}-sidecar"
+              , namespace = Some input.namespace
+              }
+            , data = Some
+              [ { mapKey = configFile
+                , mapValue = agentConfig certs input False
+                }
+              ]
+            }
+
+      let vaultAgent =
+            λ(init : Bool) →
+              kube.Container::{
+              , name =
+                  "vault-agent-${certs.volumeName}-${if    init
+                                                     then  "init"
+                                                     else  "sidecar"}"
+              , image = Some "registry.hub.docker.com/library/vault:1.3.0"
+              , args = Some
+                [ "-c", "vault agent -config=${configPath}/${configFile}" ]
+              , command = Some [ "sh" ]
+              , volumeMounts = Some
+                [ kube.VolumeMount::{
+                  , mountPath = configPath
+                  , name =
+                      "${agentConfigMapName}-${if    init
+                                               then  "init"
+                                               else  "sidecar"}"
+                  }
+                , kube.VolumeMount::{
+                  , mountPath = tokenPath
+                  , name = tokenVolume
+                  }
+                , kube.VolumeMount::{
+                  , mountPath = certPath
+                  , name = certs.volumeName
+                  }
+                , kube.VolumeMount::{ mountPath = caPath, name = caVolume }
+                ]
+              }
+
       in    input
           ⫽ { extraDocuments =
-                [ kube.Resource.ConfigMap configMap ] # input.extraDocuments
-            , initContainers = [ vaultAgent ] # input.initContainers
+                  [ kube.Resource.ConfigMap initConfigMap
+                  , kube.Resource.ConfigMap sidecarConfigMap
+                  ]
+                # input.extraDocuments
+            , initContainers = [ vaultAgent True ] # input.initContainers
+            , containers = [ vaultAgent False ] # input.containers
+            , shareProcessNamespace = Some True
             , volumes =
                   [ kube.Volume::{
-                    , name = agentConfigMapName
+                    , name = "${agentConfigMapName}-init"
                     , configMap = Some kube.ConfigMapVolumeSource::{
-                      , name = Some agentConfigMapName
+                      , name = Some "${agentConfigMapName}-init"
+                      }
+                    }
+                  , kube.Volume::{
+                    , name = "${agentConfigMapName}-sidecar"
+                    , configMap = Some kube.ConfigMapVolumeSource::{
+                      , name = Some "${agentConfigMapName}-sidecar"
                       }
                     }
                   , kube.Volume::{

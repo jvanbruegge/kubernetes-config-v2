@@ -68,6 +68,7 @@ in    λ(settings : ./Settings.dhall)
                 , api.Certs.File::{
                   , name = "phpldapadmin"
                   , subdir = Some "https"
+                  , processName = Some "apache2"
                   }
                 ]
             }

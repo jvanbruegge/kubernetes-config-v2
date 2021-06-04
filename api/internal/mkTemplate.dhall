@@ -19,5 +19,6 @@ in    λ(input : SimpleDeployment.Type)
             , serviceAccountName = input.serviceAccount
             , volumes = Some input.volumes
             , securityContext = input.securityContext
+            , shareProcessNamespace = input.shareProcessNamespace
             }
       }
