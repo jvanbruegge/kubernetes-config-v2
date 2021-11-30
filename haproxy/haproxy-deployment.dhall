@@ -75,7 +75,10 @@ in  λ(input : ./Settings.dhall) →
               , name = Some "haproxy-tcp-config"
               , namespace = Some input.namespace
               }
-            , data = Some [ { mapKey = "636", mapValue = "ldap/openldap:636" } ]
+            , data = Some
+              [ { mapKey = "636", mapValue = "ldap/openldap:636" }
+              , { mapKey = "25565", mapValue = "minecraft/minecraft:25565" }
+              ]
             }
 
       let config =
@@ -114,6 +117,7 @@ in  λ(input : ./Settings.dhall) →
                 , mkServicePort +443 "https"
                 , mkServicePort +1936 "stats"
                 , mkServicePort +636 "ldaps"
+                , mkServicePort +25565 "minecraft"
                 ]
               , selector = Some (helpers.mkSelector config)
               , externalIPs = Some config.externalIPs

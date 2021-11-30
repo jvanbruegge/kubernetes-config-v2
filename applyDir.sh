@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -eo pipefail
+set -o xtrace
 
 dir=$1
 action="apply"
