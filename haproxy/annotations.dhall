@@ -1,5 +1,5 @@
 { sslPassthrough =
-  { mapKey = "ingress.kubernetes.io/ssl-passthrough", mapValue = "true" }
+  { mapKey = "haproxy-ingress.github.io/ssl-passthrough", mapValue = "true" }
 , sslRedirect =
-  { mapKey = "ingress.kubernetes.io/ssl-redirect", mapValue = "true" }
+  { mapKey = "haproxy-ingress.github.io/ssl-redirect", mapValue = "true" }
 }

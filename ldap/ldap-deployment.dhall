@@ -66,7 +66,11 @@ in    λ(input : ./Settings.dhall)
             api.Certs::{
             , volumeName = certVolume
             , caCerts = [ api.Certs.File::{ name = "ca" } ]
-            , certs = [ api.Certs.File::{ name = "ldap" } ]
+            , certs = [ api.Certs.File::{
+                , processName = Some "slapd"
+                , name = "ldap"
+                }
+              ]
             }
 
       in  api.mkStatefulSet (api.withCerts certs config)

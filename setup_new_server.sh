@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -64,4 +64,4 @@ runStep initialize-vault
 
 runStep initialize-openldap
 
-runStep initialize-bitwarden
+#runStep initialize-bitwarden

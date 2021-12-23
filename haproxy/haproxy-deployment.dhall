@@ -12,12 +12,13 @@ let mkContainer =
         ) →
         kube.Container::{
         , name = "haproxy-ingress"
-        , image = Some "quay.io/jcmoraisjr/haproxy-ingress:v0.9.1"
+        , image = Some "quay.io/jcmoraisjr/haproxy-ingress:v0.13.4"
         , imagePullPolicy = Some "IfNotPresent"
         , args = Some
           [ "--configmap=${input.namespace}/${input.configMapName}"
           , "--tcp-services-configmap=${input.namespace}/${input.tcpConfigMapName}"
           , "--reload-strategy=native"
+          , "--watch-ingress-without-class"
           ]
         , env = Some
           [ { name = "POD_NAME"

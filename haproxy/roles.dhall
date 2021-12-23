@@ -26,13 +26,13 @@ let clusterRules =
         }
       , kube.PolicyRule::{
         , verbs = [ "get", "list", "watch" ]
-        , resources = Some [ "ingresses" ]
-        , apiGroups = Some [ "extensions" ]
+        , resources = Some [ "ingresses", "ingressclasses" ]
+        , apiGroups = Some [ "extensions", "networking.k8s.io" ]
         }
       , kube.PolicyRule::{
         , verbs = [ "update" ]
         , resources = Some [ "ingresses/status" ]
-        , apiGroups = Some [ "extensions" ]
+        , apiGroups = Some [ "extensions", "networking.k8s.io" ]
         }
       ]
 

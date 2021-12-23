@@ -19,7 +19,7 @@ let port = +51820
 let wireguardContainer =
       kube.Container::{
       , name = "wireguard"
-      , image = Some "ghcr.io/linuxserver/wireguard:v1.0.20200827-ls7"
+      , image = Some "linuxserver/wireguard:1.0.20210914"
       , ports = Some
         [ kube.ContainerPort::{ containerPort = port, protocol = Some "UDP" } ]
       , env = Some

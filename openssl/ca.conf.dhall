@@ -14,6 +14,7 @@ in  openssl.mkCaConfig
         , state = Some settings.stateOrProvinceName
         , streetAddress = Some settings.streetAddress
         }
+      , defaultDays = 7200
       , allowedHosts = [] : List Text
       , caDir = "ca"
       }

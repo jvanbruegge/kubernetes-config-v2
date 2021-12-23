@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -69,7 +69,7 @@ sudo mkdir -p /data
 sudo chown -R "$SERVER_USER:$SERVER_USER" /data
 
 echo "allowedUnsafeSysctls:
-  - 'net.ipv4.ip_forward'" >> /var/lib/kubelet/config.yaml
+  - 'net.ipv4.ip_forward'" | sudo tee -a /var/lib/kubelet/config.yaml
 
 sudo systemctl restart kubelet.service
 

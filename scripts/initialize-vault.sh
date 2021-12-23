@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -21,7 +21,7 @@ export VAULT_CLIENT_KEY="$dir/vault-operator.key"
 
 sleep 5
 
-initResponse=$(curl -s --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" --key "$VAULT_CLIENT_KEY" \
+initResponse=$(curl --cacert "$VAULT_CACERT" --cert "$VAULT_CLIENT_CERT" --key "$VAULT_CLIENT_KEY" \
     -XPUT --data '{ "secret_shares": 5, "secret_threshold": 3 }' "$VAULT_ADDR/v1/sys/init")
 
 vaultKeys=$(echo "$initResponse" | jq -r '.keys | .[]')
@@ -108,7 +108,7 @@ curlCmd -XPUT --data "{ \"policy\": \"$policy\" }" "$VAULT_ADDR/v1/sys/policy/ge
 echo "Setting up kubernetes authentication"
 
 curlCmd -XPOST --data '{ "type": "kubernetes" }' "$VAULT_ADDR/v1/sys/auth/kubernetes"
-curlCmd -XPOST --data '{ "kubernetes_host": "https://kubernetes.default.svc" }'  "$VAULT_ADDR/v1/auth/kubernetes/config"
+curlCmd -XPOST --data '{ "kubernetes_host": "https://kubernetes.default.svc", "issuer": "https://kubernetes.default.svc.cluster.local" }'  "$VAULT_ADDR/v1/auth/kubernetes/config"
 curlCmd -XPOST --data '{ "bound_service_account_names": ["default"], "bound_service_account_namespaces": ["*"], "token_ttl": "2h", "token_policies": ["get-cert"] }' "$VAULT_ADDR/v1/auth/kubernetes/role/get-cert"
 
 echo "Enabling key-value backend"

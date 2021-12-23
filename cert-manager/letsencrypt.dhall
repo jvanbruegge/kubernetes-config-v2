@@ -10,7 +10,7 @@ in  { apiVersion = "cert-manager.io/v1"
             , preferredChain = "ISRG Root X1"
             , privateKeySecretRef =
                 { name = "cerberus-systems-letsencrypt-account-key" }
-            , solvers = [ { http01 = { ingress = { class = "haproxy" } } } ]
+            , solvers = [ { http01 = { ingress = {=} } } ]
             }
         }
     }

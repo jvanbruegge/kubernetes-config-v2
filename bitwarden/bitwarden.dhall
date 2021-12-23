@@ -11,7 +11,7 @@ let claimName = "bitwarden-claim"
 let bitwardenContainer =
       kube.Container::{
       , name = "bitwarden"
-      , image = Some "registry.hub.docker.com/vaultwarden/server:1.21.0-alpine"
+      , image = Some "registry.hub.docker.com/vaultwarden/server:1.23.1-alpine"
       , ports = Some
         [ kube.ContainerPort::{ containerPort = +80, protocol = Some "TCP" } ]
       , env = Some

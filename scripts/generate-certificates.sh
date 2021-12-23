@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -19,7 +19,7 @@ if [ ! -e "$caDir/ca.key" ]; then
 
     echo "$caPass" | \
         openssl req -new -nodes -newkey rsa:4096 -keyout "$caDir/ca.key" -out "$caDir/ca.crt" \
-            -config "$caDir/ca.conf" -x509 -days 7300 -passin stdin
+            -config "$caDir/ca.conf" -x509 -passin stdin
 
     [ -e "$dir" ] && rm -r "$dir"
 fi
